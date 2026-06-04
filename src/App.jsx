@@ -1,28 +1,85 @@
 import { useState, useRef, useEffect } from "react";
 
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPA_URL = "https://nwoxxxsynrrjomgxikqm.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53b3h4eHN5bnJyam9tZ3hpa3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjU2ODQsImV4cCI6MjA5NjE0MTY4NH0.e6lzCJdkRzFwc1pstPlPEJ2MeGSg3KJgU7jtvNE4AHU";
+
+async function supaGet(slug) {
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}&select=data&limit=1`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
+    });
+    const rows = await r.json();
+    console.log("supaGet:", rows);
+    return rows?.[0]?.data || null;
+  } catch(e) { console.error("supaGet error:", e); return null; }
+}
+
+async function supaSave(slug, data) {
+  try {
+    // Probeer eerst update (als slug bestaat), anders insert
+    const check = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}&select=id&limit=1`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
+    });
+    const existing = await check.json();
+
+    if (existing?.length > 0) {
+      // Update bestaande rij
+      const r = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}`, {
+        method: "PATCH",
+        headers: {
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data })
+      });
+      console.log("supaSave PATCH status:", r.status);
+    } else {
+      // Insert nieuwe rij
+      const r = await fetch(`${SUPA_URL}/rest/v1/vacatures`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ slug, data })
+      });
+      console.log("supaSave POST status:", r.status);
+    }
+  } catch(e) { console.error("supaSave exception:", e); }
+}
+
+
 // ─── PRINT STYLES ─────────────────────────────────────────────────────────────
 function PrintStyles() {
   useEffect(() => {
     const style = document.createElement('style');
-    style.id = 'print-styles';
+    style.id = 'cv-print-styles';
     style.textContent = `
       @media print {
-        @page { margin: 1.5cm; size: A4; }
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        button, a[download] { display: none !important; }
-        /* Verberg beheer-tab en navigatiebalk knoppen */
-        [data-print-hide] { display: none !important; }
-        /* Zorg dat alle content zichtbaar is */
-        [data-print-show] { display: block !important; max-height: none !important; overflow: visible !important; }
-        /* Netjes afdrukken */
+        @page { margin: 1.2cm 1.5cm; size: A4 portrait; }
+        html, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        /* Verberg knoppen en tabs */
+        .no-print { display: none !important; }
+        /* Verwijder scroll-limieten */
+        div[style*="overflow"] { overflow: visible !important; max-height: none !important; }
+        div[style*="maxHeight"] { max-height: none !important; overflow: visible !important; }
+        /* Verberg korte samenvatting, toon altijd de lange versie */
+        .loopbaan-kort { display: none !important; }
+        .loopbaan-lang { display: block !important; }
         * { box-shadow: none !important; }
       }
     `;
-    if (!document.getElementById('print-styles')) {
+    if (!document.getElementById('cv-print-styles')) {
       document.head.appendChild(style);
     }
     return () => {
-      const el = document.getElementById('print-styles');
+      const el = document.getElementById('cv-print-styles');
       if (el) el.remove();
     };
   }, []);
@@ -770,6 +827,18 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
 function LoopbaanPanel({ highlights, ac }) {
   const [open, setOpen] = useState({});
   const color = ac || "#111";
+
+  // Bij printen: klap alles open
+  useEffect(() => {
+    const beforePrint = () => {
+      const allOpen = {};
+      LOOPBAAN.forEach((_, i) => { allOpen[i] = true; });
+      setOpen(allOpen);
+    };
+    window.addEventListener('beforeprint', beforePrint);
+    return () => window.removeEventListener('beforeprint', beforePrint);
+  }, []);
+
   return (
     <div style={{ padding: "16px 20px", overflowY: "auto", maxHeight: 420 }}>
       {LOOPBAAN.map((item, i) => {
@@ -796,10 +865,10 @@ function LoopbaanPanel({ highlights, ac }) {
                 <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap", marginLeft: 8 }}>{item.periode.replace(/\d{4}[–\-]\d{4}|\d{4}[–\-]nu|\d{4}[–\-]heden|\d{4}/g, "").replace(/^[–\-\s]+|[–\-\s]+$/g, "") || "—"}</span>
               </div>
               {!isOpen && (
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: isHighlight ? color + "99" : "#9ca3af", lineHeight: 1.4 }}>{item.kort}</p>
+                <p className="loopbaan-kort" style={{ margin: "4px 0 0", fontSize: 12, color: isHighlight ? color + "99" : "#9ca3af", lineHeight: 1.4 }}>{item.kort}</p>
               )}
               {isOpen && (
-                <div style={{ marginTop: 8 }}>
+                <div className="loopbaan-lang" style={{ marginTop: 8 }}>
                   <p style={{ margin: "0 0 8px", fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{item.lang}</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {item.tags.map(t => <span key={t} style={{ padding: "2px 9px", borderRadius: 20, fontSize: 11,
@@ -1386,6 +1455,28 @@ export default function App() {
   const [vacature, setVacature] = useState(null);
   const [tab, setTab] = useState("chat");
   const [copied, setCopied] = useState(false);
+  const [recruiterMode, setRecruiterMode] = useState(false);
+
+  // ── URL-routing: laad vacature op basis van slug via Supabase ────────────
+  useEffect(() => {
+    const slug = window.location.pathname.replace(/^\//, '').trim();
+    console.log("URL slug detected:", slug);
+    if (!slug || slug === 'index.html') { console.log("No slug, showing setup"); return; }
+    supaGet(slug).then(data => {
+      console.log("supaGet data:", data);
+      if (data) {
+        // Herstel volledige state
+        const { introTekst: it, kennisbank: kb, qaOverrides: qa, stijlgeheugen: sg, ...vac } = data;
+        setVacature(vac);
+        if (it) setIntroTekst(it);
+        if (kb) setKennisbank(kb);
+        if (qa) setQaOverrides(qa);
+        if (sg) setStijlgeheugen(sg);
+        setTab("chat");
+        setRecruiterMode(true);
+      }
+    }).catch(() => {});
+  }, []);
 
   const [kennisbank, setKennisbank] = useState([]);
   const [introTekst, setIntroTekst] = useState("");
@@ -1493,7 +1584,17 @@ export default function App() {
   const highlights = getHighlights(vacature.vacatureTekst);
   const ac = vacature.kleur || "#111111";
 
-  const copy = () => {
+  const copy = async () => {
+    console.log("COPY CLICKED — slug:", vacature.slug);
+    // Sla alle relevante state op in Supabase
+    const payload = {
+      ...vacature,
+      introTekst,
+      kennisbank: kennisbank || [],
+      qaOverrides: qaOverrides || {},
+      stijlgeheugen: stijlgeheugen || [],
+    };
+    try { await supaSave(vacature.slug, payload); } catch(e) { console.error("copy error:", e); }
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
@@ -1502,7 +1603,7 @@ export default function App() {
     { id: "chat", label: t("tab_chat"), icon: "💬" },
     { id: "loopbaan", label: t("tab_loopbaan"), icon: "📍" },
     { id: "impact", label: t("tab_impact"), icon: "📊" },
-    { id: "beheer", label: t("tab_beheer"), icon: "⚙️" },
+    ...(!recruiterMode ? [{ id: "beheer", label: t("tab_beheer"), icon: "⚙️" }] : []),
   ];
 
   return (
@@ -1530,16 +1631,18 @@ export default function App() {
         </div>
 
         {/* Download/link balk */}
-        <div style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="no-print" style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 11, color: "#9ca3af", flex: 1, fontFamily: "monospace" }}>cv.arjenvaalburg.nl/{vacature.slug}</span>
-          <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
-            {copied ? t("btn_copied") : t("btn_copy")}
-          </button>
+          {!recruiterMode && (
+            <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
+              {copied ? t("btn_copied") : t("btn_copy")}
+            </button>
+          )}
           <button onClick={() => window.print()} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer" }}>{t("btn_pdf")}</button>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "0.5px solid #e5e7eb" }}>
+        <div className="no-print" style={{ display: "flex", borderBottom: "0.5px solid #e5e7eb" }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => handleTabChange(t.id)} style={{ flex: 1, padding: "11px 4px", border: "none", borderBottom: tab === t.id ? `3px solid ${t.id === "beheer" ? "#374151" : ac}` : "3px solid transparent", background: "none", cursor: "pointer", fontSize: 12, fontWeight: tab === t.id ? 700 : 400, color: tab === t.id ? "#111" : "#6b7280", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
               <span>{t.icon}</span>{t.label}
