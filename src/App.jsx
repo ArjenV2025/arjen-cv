@@ -1,5 +1,95 @@
 import { useState, useRef, useEffect } from "react";
 
+// ─── PRINT STYLES ─────────────────────────────────────────────────────────────
+function PrintStyles() {
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'cv-print-styles';
+    style.textContent = `
+      @media print {
+        @page { margin: 1.2cm 1.5cm; size: A4 portrait; }
+        html, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        /* Verberg alles behalve de kaart */
+        body > * { display: none !important; }
+        #cv-print-root, #cv-print-root * { display: revert !important; }
+        /* Verberg knoppen, tabs, beheer */
+        .no-print { display: none !important; }
+        /* Loopbaan: altijd open */
+        .print-expand { max-height: none !important; overflow: visible !important; }
+        * { box-shadow: none !important; }
+      }
+    `;
+    if (!document.getElementById('cv-print-styles')) {
+      document.head.appendChild(style);
+    }
+    return () => {
+      const el = document.getElementById('cv-print-styles');
+      if (el) el.remove();
+    };
+  }, []);
+  return null;
+}
+
+function printCV() {
+  window.print();
+}
+
+
+const LABELS = {
+  setup_title: "Nieuwe sollicitatie",
+  setup_sub: "Vul de vacature in — de app past zich automatisch aan.",
+  setup_org: "Organisatie *", setup_func: "Functietitel *",
+  setup_slug: "URL-slug", setup_color: "Accentkleur",
+  setup_vactext: "Vacaturetekst (plak hier de volledige tekst)",
+  setup_contract: "Type opdracht:",
+  setup_freelance: "Freelance / interim",
+  setup_freelance_sub: "Accent op snelheid, directe impact, geen overhead",
+  setup_vaste: "Vaste baan",
+  setup_vaste_sub: "Accent op continuïteit, oogsten en optimaliseren",
+  setup_intro_title: "Introductietekst boven de chat",
+  setup_gen_ai: "✦ Genereer met AI", setup_generating: "Genereren…",
+  setup_open: "Sollicitatiepagina openen →",
+  tab_chat: "Gesprek", tab_loopbaan: "Loopbaan",
+  tab_impact: "Impact", tab_beheer: "Beheer",
+  chat_placeholder: "Stel een vraag…",
+  chat_opening: "Stel gerust een vraag — of kies er een uit de lijst hieronder.",
+  btn_copy: "Kopieer link", btn_copied: "Gekopieerd ✓", btn_pdf: "↓ PDF",
+  chip_opening: "Opening", chip_sterktes: "Sterktes & persoonlijkheid",
+  chip_ervaring: "Ervaring", chip_leiderschap: "Leiderschap",
+  chip_lastig: "Lastige vragen", chip_afsluiting: "Afsluiting",
+  chip_persoonlijk: "Persoonlijk",
+  impact_resultaat: "Resultaat: ", impact_kb_badge: "kennisbank",
+  imp_50pct_l: "Kostenverlaging", imp_60pct_l: "Retentie verbetering",
+  imp_100k_l: "Directe besparing", imp_fte_l: "PMO programma",
+  beheer_mode: "⚙️ Beheermodus — alleen zichtbaar voor jou",
+  beheer_reset: "← Nieuwe sollicitatie",
+  beheer_analytics: "Analytics", beheer_antwoorden: "Antwoorden",
+  beheer_kennisbank: "Kennisbank", beheer_intro: "Introductietekst",
+  beheer_vacature: "Vacature-info",
+  beheer_intro_sub: "Dit blok verschijnt boven het chatvenster.",
+  beheer_intro_preview: "Voorbeeld", beheer_intro_save: "Opslaan",
+  beheer_intro_template: "⭐ Bewaar als starttemplate",
+  beheer_intro_cancel: "Annuleren",
+  beheer_intro_template_hint: "Wordt als startpunt gebruikt bij de volgende sollicitatie.",
+  ana_sessions: "Sessies", ana_total_q: "Vragen totaal",
+  ana_free: "Vrij getypt", ana_pdf: "PDF downloads",
+  ana_tabs: "Tabbladen bekeken", ana_transcripts: "Sessies & transcripten",
+  ana_free_q: "Meest vrij getypte vragen",
+  ana_free_sub: "Overweeg toe te voegen als chip.",
+  ana_empty: "Nog geen activiteit.", ana_clear: "Wis data",
+  sg_title: "Stijlgeheugen", sg_learned: "observatie", sg_learned_pl: "observaties",
+  sg_stijl_btn: "🎨 Stijlregel", sg_feit_btn: "📌 Feitelijke correctie",
+  sg_regen: "🔄 Nieuwe versie", sg_good: "👍 Goed zo",
+  sg_original: "↩ Origineel", sg_learning: "leert…",
+  footer_left: "Sollicitatie Arjen Vaalburg · 2026",
+  footer_right: "Interactieve sollicitatie",
+};
+const t = (k) => LABELS[k] || k;
+
 // ─── PROFIEL DATA ─────────────────────────────────────────────────────────────
 const PROFIEL = {
   naam: "Arjen Vaalburg",
@@ -284,10 +374,10 @@ GOEDE FORMULERINGEN: "wat mij aanspreekt", "voor mij begint", "ik vind het belan
 VERBODEN — gebruik deze woorden en uitdrukkingen NOOIT:
 precies, executiekracht, operationalisering, betekenisgeving, rolverheldering, strategische alignment, faciliteren (gebruik: helpen / zorgen dat), borgen (gebruik: zorgen dat het blijft staan), passie, out-of-the-box, spin in het web, duizendpoot, de ideale kandidaat, op het lijf geschreven, stakeholdermanagement (in combinatie met andere jargonwoorden). Gebruik nooit "Hoi" of "Hey" als aanhef — altijd "Beste [naam]", "Dag [naam]" of "Geachte [naam]".
 
-GEEN AFSLUITENDE SAMENVATTING: eindig een antwoord nooit met een zin die samenvat wat je net zei of onderstreept dat je er goed in bent. Geen "dat is het snijvlak waar ik het beste op functioneer", geen "dat geeft energie", geen "dat is waar ik goed in ben", geen "dat past bij me". Zeg het één keer goed, dan is het klaar.\${stijlTekst ? `
+GEEN AFSLUITENDE SAMENVATTING: eindig een antwoord nooit met een zin die samenvat wat je net zei of onderstreept dat je er goed in bent. Geen "dat is het snijvlak waar ik het beste op functioneer", geen "dat geeft energie", geen "dat is waar ik goed in ben", geen "dat past bij me". Zeg het één keer goed, dan is het klaar.${stijlTekst ? `
 
 PERSOONLIJKE STIJLVOORKEUR (geleerd uit eigen correcties):
-\${stijlTekst}` : ""}
+${stijlTekst}` : ""}
 
 ACHTERGROND: PMO VIM Group/PŸUR (Prince2, 50 FTE, 11 werkstromen), Global Head Comms Merck KGaA (50.000+ mwk, De Bono, €100k besparing), Head Brand Ncardia (HubSpot end-to-end), Hoofd KS Staatsloterij (60% retentie↑, Sales-as-a-Service), Head Strategy Ogilvy Amsterdam, AI Compliance Academy (2025). NIMA-C, Prince2, Scrum PO/SM.
 
@@ -302,7 +392,7 @@ ${kbTekst}` : ""}`;
 
 async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) {
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
+    const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -319,13 +409,13 @@ async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) 
 
 // ─── STANDAARD CHIPS PER CATEGORIE ───────────────────────────────────────────
 const DEFAULT_CHIPS = [
-  { label: "Opening", chips: ["Vertel over jezelf", "Waarom ben jij geschikt?", "Wat zoek je in een rol?"] },
-  { label: "Sterktes & persoonlijkheid", chips: ["Wat is je grootste zwakte?", "Wat motiveert jou?", "Hoe omschrijven collega's jou?"] },
-  { label: "Ervaring", chips: ["Wat is je grootste prestatie?", "Vertel over een mislukking", "PMO-ervaring?", "Ervaring met AI?"] },
-  { label: "Leiderschap", chips: ["Wat is je leiderschapsstijl?", "Hoe ga je om met weerstand?", "Hoe geef je feedback?"] },
-  { label: "Lastige vragen", chips: ["Ben je niet te senior?", "Waarom zoveel interimrollen?", "Geen sector-ervaring — waarom toch?"] },
-  { label: "Afsluiting", chips: ["Beschikbaarheid & tarief?", "In welke cultuur pas jij?", "Vragen aan jullie"] },
-  { label: "Persoonlijk", chips: ["Wat voor sport doe je?", "Wie ben je buiten je cv?"] },
+  { labelKey: "chip_opening", chips: ["Vertel over jezelf", "Waarom ben jij geschikt?", "Wat zoek je in een rol?"] },
+  { labelKey: "chip_sterktes", chips: ["Wat is je grootste zwakte?", "Wat motiveert jou?", "Hoe omschrijven collega's jou?"] },
+  { labelKey: "chip_ervaring", chips: ["Wat is je grootste prestatie?", "Vertel over een mislukking", "PMO-ervaring?", "Ervaring met AI?"] },
+  { labelKey: "chip_leiderschap", chips: ["Wat is je leiderschapsstijl?", "Hoe ga je om met weerstand?", "Hoe geef je feedback?"] },
+  { labelKey: "chip_lastig", chips: ["Ben je niet te senior?", "Waarom zoveel interimrollen?", "Geen sector-ervaring — waarom toch?"] },
+  { labelKey: "chip_afsluiting", chips: ["Beschikbaarheid & tarief?", "In welke cultuur pas jij?", "Vragen aan jullie"] },
+  { labelKey: "chip_persoonlijk", chips: ["Wat voor sport doe je?", "Wie ben je buiten je cv?"] },
 ];
 
 // ─── INTRO EDITOR (boven chat, bewerkbaar) ────────────────────────────────────
@@ -427,7 +517,7 @@ function SetupScherm({ onSave, introTemplate }) {
     if (!vacatureTekst && !functie) return;
     setGenerating(true);
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -508,8 +598,8 @@ function SetupScherm({ onSave, introTemplate }) {
             <div style={{ display: "flex", gap: 8, padding: "10px 14px", background: "#f9fafb", borderRadius: 10, border: "0.5px solid #e5e7eb", marginBottom: 12 }}>
               <p style={{ margin: "0 8px 0 0", fontSize: 13, fontWeight: 600, color: "#374151" }}>Type opdracht:</p>
               {[
-                { val: true, label: "Freelance / interim", desc: "Accent op snelheid, directe impact, geen overhead" },
-                { val: false, label: "Vaste baan", desc: "Accent op continuïteit, oogsten en optimaliseren" },
+                { val: true, label: t("setup_freelance"), desc: t("setup_freelance_sub") },
+                { val: false, label: t("setup_vaste"), desc: t("setup_vaste_sub") },
               ].map(opt => (
                 <label key={String(opt.val)} style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", flex: 1, padding: "8px 12px", borderRadius: 8, border: `1px solid ${isFreelance === opt.val ? "#111" : "#e5e7eb"}`, background: isFreelance === opt.val ? "#111" : "#fff", transition: "all 0.15s" }}>
                   <input type="radio" name="contractvorm" checked={isFreelance === opt.val} onChange={() => setIsFreelance(opt.val)}
@@ -540,7 +630,7 @@ function SetupScherm({ onSave, introTemplate }) {
                 disabled={generating || (!functie && !vacatureTekst)}
                 style={{ padding: "6px 14px", background: generating ? "#f3f4f6" : "#111", color: generating ? "#9ca3af" : "#fff", border: "none", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 700 }}
               >
-                {generating ? "Genereren…" : "✦ Genereer met AI"}
+                {generating ? t("setup_generating") : t("setup_gen_ai")}
               </button>
             </div>
             <textarea
@@ -587,11 +677,11 @@ function usePalette(ac) {
   };
 }
 
-
 function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennisbank, qaOverrides, stijlgeheugen }) {
   const pal = usePalette(ac);
-  const [msgs, setMsgs] = useState([{ who: "av", text: "Stel gerust een vraag — of kies er een uit de lijst hieronder." }]);
+  const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState("");
+  const openingMsg = { who: "av", text: t("chat_opening") };
   const [typing, setTyping] = useState(false);
   const [chipsHidden, setChipsHidden] = useState(false);
   const [sessionStart] = useState(Date.now());
@@ -640,7 +730,7 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ maxHeight: 320, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-        {msgs.map((m, i) => (
+        {[openingMsg, ...msgs].map((m, i) => (
           <div key={i} style={{ display: "flex", gap: 10, flexDirection: m.who === "user" ? "row-reverse" : "row", alignItems: "flex-start" }}>
             <div style={{ width: 26, height: 26, borderRadius: "50%", background: m.who === "av" ? "#111" : "#e5e7eb", color: m.who === "av" ? "#fff" : "#555", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
               {m.who === "av" ? "AV" : "U"}
@@ -663,7 +753,7 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
         <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", gap: 7 }}>
           {chips.map(group => (
             <div key={group.label}>
-              <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 700, color: ac || "#9ca3af", letterSpacing: "0.07em", textTransform: "uppercase" }}>{group.label}</p>
+              <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 700, color: ac || "#9ca3af", letterSpacing: "0.07em", textTransform: "uppercase" }}>{t(group.labelKey || group.label)}</p>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {group.chips.map(c => (
                   <button key={c} onClick={() => send(c)} style={{ padding: "4px 11px", borderRadius: 20, border: `0.5px solid ${pal.mid}`, background: "#fff", color: "#6b7280", fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}
@@ -678,7 +768,7 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
 
       <div style={{ padding: "12px 20px", borderTop: "0.5px solid #e5e7eb", display: "flex", gap: 8 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send(input)}
-          placeholder="Stel een vraag…" style={{ flex: 1, padding: "9px 14px", borderRadius: 8, border: `1px solid ${pal.mid}`, fontSize: 14, outline: "none", fontFamily: "sans-serif", color: "#374151", background: "#fff" }} />
+          placeholder={t("chat_placeholder")} style={{ flex: 1, padding: "9px 14px", borderRadius: 8, border: `1px solid ${pal.mid}`, fontSize: 14, outline: "none", fontFamily: "sans-serif", color: "#374151", background: "#fff" }} />
         <button onClick={() => send(input)} style={{ padding: "9px 16px", background: ac || "#111", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 16 }}>↑</button>
       </div>
     </div>
@@ -763,7 +853,7 @@ function ImpactPanel({ ac, kennisbank }) {
   return (
     <div style={{ padding: "16px 20px", overflowY: "auto", maxHeight: 420 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
-        {[["50%", "Kostenverlaging", "Staatsloterij"], ["60%", "Retentie verbetering", "Staatsloterij"], ["€100k", "Directe besparing", "Merck KGaA"], ["50 FTE", "PMO programma", "VIM Group"]].map(([n, l, c]) => (
+        {[["50%", t("imp_50pct_l"), "Staatsloterij"], ["60%", t("imp_60pct_l"), "Staatsloterij"], ["€100k", t("imp_100k_l"), "Merck KGaA"], ["50 FTE", t("imp_fte_l"), "VIM Group"]].map(([n, l, c]) => (
           <div key={n} style={{ padding: "14px 16px", background: pal.whisper, borderRadius: 10, border: `0.5px solid ${pal.mid}` }}>
             <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: pal.full, lineHeight: 1 }}>{n}</p>
             <p style={{ margin: "3px 0 2px", fontSize: 12, color: "#374151" }}>{l}</p>
@@ -777,7 +867,7 @@ function ImpactPanel({ ac, kennisbank }) {
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#111" }}>{c.titel}</p>
-                {c.fromKB && <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 10, background: pal.soft, color: pal.full, fontWeight: 700 }}>kennisbank</span>}
+                {c.fromKB && <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 10, background: pal.soft, color: pal.full, fontWeight: 700 }}>{t("impact_kb_badge")}</span>}
               </div>
               <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>{c.org}</p>
             </div>
@@ -788,7 +878,7 @@ function ImpactPanel({ ac, kennisbank }) {
               <p style={{ margin: "0 0 8px", fontSize: 13, color: "#374151", lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{c.body}</p>
               {c.resultaat && (
                 <div style={{ padding: "8px 12px", background: pal.soft, border: `0.5px solid ${pal.mid}`, borderRadius: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: pal.full }}>Resultaat: </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: pal.full }}>{t("impact_resultaat")}</span>
                   <span style={{ fontSize: 12, color: "#374151" }}>{c.resultaat}</span>
                 </div>
               )}
@@ -796,6 +886,55 @@ function ImpactPanel({ ac, kennisbank }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── BEHEER INTRO EDITOR ──────────────────────────────────────────────────────
+function BeheerIntroEditor({ introTekst, onChange, onSaveAsTemplate, ac }) {
+  const [local, setLocal] = useState(introTekst || "");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { setLocal(introTekst || ""); }, [introTekst]);
+
+  const save = () => {
+    onChange(local);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const saveTemplate = () => {
+    onSaveAsTemplate(local);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div style={{ padding: "16px 20px" }}>
+      <div style={{ background: "#f0f9ff", border: "0.5px solid #bae6fd", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+        <p style={{ margin: 0, fontSize: 13, color: "#0369a1", lineHeight: 1.6 }}>
+          {t("beheer_intro_sub")}
+        </p>
+      </div>
+      <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("beheer_intro_preview")}</p>
+      <div style={{ background: "#f9fafb", border: "0.5px solid #e5e7eb", borderRadius: 10, padding: "12px 16px", marginBottom: 14 }}>
+        <pre style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 13, lineHeight: 1.8, color: "#374151", whiteSpace: "pre-wrap" }}>{local || <span style={{ color: "#9ca3af", fontStyle: "italic" }}>Leeg</span>}</pre>
+      </div>
+      <textarea
+        value={local}
+        onChange={e => setLocal(e.target.value)}
+        style={{ width: "100%", minHeight: 160, padding: "10px 12px", borderRadius: 8, border: `1px solid ${ac || "#d1d5db"}`, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.8, resize: "vertical", boxSizing: "border-box", color: "#374151" }}
+      />
+      <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <button onClick={save} style={{ padding: "7px 18px", background: ac || "#111", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+          {t("beheer_intro_save")}
+        </button>
+        <button onClick={saveTemplate} style={{ padding: "7px 14px", background: "#fff", border: `0.5px solid ${ac || "#d1d5db"}`, borderRadius: 8, cursor: "pointer", fontSize: 12, color: ac || "#374151" }}>
+          {t("beheer_intro_template")}
+        </button>
+        {saved && <span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>✓</span>}
+      </div>
+      <p style={{ margin: "8px 0 0", fontSize: 11, color: "#9ca3af" }}>{t("beheer_intro_template_hint")}</p>
     </div>
   );
 }
@@ -830,7 +969,7 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
       ? `Je analyseert hoe Arjen Vaalburg een feitelijke correctie maakt in zijn tekst. Formuleer in 1-2 zinnen wat er inhoudelijk is gecorrigeerd, als instructie voor de AI: "Onthoud dat...", "De correcte informatie is...", "Gebruik voortaan...". Geen inleiding, geen uitleg.`
       : `Je analyseert hoe Arjen Vaalburg zijn eigen teksten aanpast op schrijfstijl. Geef in maximaal 2 korte zinnen een concrete stijlobservatie. Formuleer als instructie: "Gebruik...", "Vermijd...", "Schrijf...". Geen inleiding.`;
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -870,7 +1009,7 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
     setRegenerating(r => ({ ...r, [key]: true }));
     try {
       const stijlInstructie = (stijlgeheugen || []).map(s => s.observatie).join(" ");
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -953,15 +1092,15 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
                     👍 Goed zo
                   </button>
                   <button onClick={() => regenerate(item)} disabled={!!regenerating[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #d1d5db", background: "#fff", cursor: "pointer", fontSize: 12, color: "#6b7280" }}>
-                    {regenerating[key] ? "Bezig…" : "🔄 Nieuwe versie"}
+                    {regenerating[key] ? t("sg_learning") : t("sg_regen")}
                   </button>
                   {override.customAnswer && <>
                     <span style={{ fontSize: 11, color: "#9ca3af" }}>Sla op als:</span>
                     <button onClick={() => commitLearn(key, "stijl")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bfdbfe", background: "#eff6ff", cursor: "pointer", fontSize: 12, color: "#1d4ed8" }}>
-                      {learning[key] === "stijl" ? "Leert…" : "🎨 Stijlregel"}
+                      {learning[key] === "stijl" ? t("sg_learning") : t("sg_stijl_btn")}
                     </button>
                     <button onClick={() => commitLearn(key, "feit")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bbf7d0", background: "#f0fdf4", cursor: "pointer", fontSize: 12, color: "#15803d" }}>
-                      {learning[key] === "feit" ? "Leert…" : "📌 Feitelijke correctie"}
+                      {learning[key] === "feit" ? t("sg_learning") : t("sg_feit_btn")}
                     </button>
                     <button onClick={() => save({ ...edits, [key]: {} })} style={{ padding: "5px 10px", borderRadius: 7, border: "0.5px solid #fca5a5", background: "#fff", cursor: "pointer", fontSize: 11, color: "#dc2626" }}>
                       ↩ Origineel
@@ -1104,7 +1243,7 @@ function Kennisbank({ vacatureSlug, value, onChange }) {
 }
 
 // ─── BEHEER PANEL ─────────────────────────────────────────────────────────────
-function BeheerPanel({ vacature, onReset, kennisbank, onKennisbankChange, qaOverrides, onQaOverridesChange, stijlgeheugen, onStijlgeheugenChange }) {
+function BeheerPanel({ vacature, onReset, kennisbank, onKennisbankChange, qaOverrides, onQaOverridesChange, stijlgeheugen, onStijlgeheugenChange, introTekst, onIntroChange, onSaveAsTemplate, ac }) {
   const [subTab, setSubTab] = useState("analytics");
   const [analyticsData, setAnalyticsData] = useState(null);
   const [openSessie, setOpenSessie] = useState(null);
@@ -1139,7 +1278,7 @@ function BeheerPanel({ vacature, onReset, kennisbank, onKennisbankChange, qaOver
         <button onClick={onReset} style={{ padding: "3px 10px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>← Nieuwe sollicitatie</button>
       </div>
       <div style={{ display: "flex", borderBottom: "0.5px solid #e5e7eb", background: "#fafafa" }}>
-        {[["analytics", "Analytics"], ["antwoorden", "Antwoorden"], ["kennisbank", "Kennisbank"], ["vacature", "Vacature-info"]].map(([id, lbl]) => (
+        {[["analytics", t("beheer_analytics")], ["antwoorden", t("beheer_antwoorden")], ["kennisbank", t("beheer_kennisbank")], ["intro", t("beheer_intro")], ["vacature", t("beheer_vacature")]].map(([id, lbl]) => (
           <button key={id} onClick={() => setSubTab(id)} style={{ flex: 1, padding: "9px 6px", border: "none", borderBottom: subTab === id ? "2px solid #374151" : "2px solid transparent", background: "none", cursor: "pointer", fontSize: 12, fontWeight: subTab === id ? 700 : 400, color: subTab === id ? "#111" : "#6b7280" }}>{lbl}</button>
         ))}
       </div>
@@ -1147,7 +1286,7 @@ function BeheerPanel({ vacature, onReset, kennisbank, onKennisbankChange, qaOver
       {subTab === "analytics" && (
         <div style={{ padding: "16px 20px", overflowY: "auto", maxHeight: 420 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
-            {[["Sessies", sessions.length], ["Vragen totaal", totalQ], ["Vrij getypt", freeQ.length], ["PDF downloads", pdfDownloads]].map(([l, v]) => (
+            {[[t("ana_sessions"), sessions.length], [t("ana_total_q"), totalQ], [t("ana_free"), freeQ.length], [t("ana_pdf"), pdfDownloads]].map(([l, v]) => (
               <div key={l} style={{ padding: "12px", background: "#f9fafb", borderRadius: 10, border: "0.5px solid #e5e7eb" }}>
                 <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#111" }}>{v}</p>
                 <p style={{ margin: "3px 0 0", fontSize: 11, color: "#6b7280" }}>{l}</p>
@@ -1216,6 +1355,14 @@ function BeheerPanel({ vacature, onReset, kennisbank, onKennisbankChange, qaOver
       {subTab === "antwoorden" && (
         <AntwoordenEditor qaOverrides={qaOverrides} onChange={onQaOverridesChange} stijlgeheugen={stijlgeheugen} onStijlgeheugenChange={onStijlgeheugenChange} />
       )}
+      {subTab === "intro" && (
+        <BeheerIntroEditor
+          introTekst={introTekst}
+          onChange={onIntroChange}
+          onSaveAsTemplate={onSaveAsTemplate}
+          ac={ac}
+        />
+      )}
       {subTab === "kennisbank" && (
         <Kennisbank
           vacatureSlug={vacature.slug}
@@ -1248,6 +1395,23 @@ export default function App() {
   const [vacature, setVacature] = useState(null);
   const [tab, setTab] = useState("chat");
   const [copied, setCopied] = useState(false);
+  const [recruiterMode, setRecruiterMode] = useState(false);
+
+  // ── URL-routing: laad vacature op basis van slug in URL ──────────────────
+  useEffect(() => {
+    const slug = window.location.pathname.replace(/^\//, '').trim();
+    if (!slug || slug === 'index.html') return;
+    try {
+      const stored = localStorage.getItem(`vacature-${slug}`);
+      if (stored) {
+        const data = JSON.parse(stored);
+        setVacature(data);
+        setTab("chat");
+        setRecruiterMode(true); // recruiter ziet geen beheer
+      }
+    } catch {}
+  }, []);
+
   const [kennisbank, setKennisbank] = useState([]);
   const [introTekst, setIntroTekst] = useState("");
   const [introTemplate, setIntroTemplate] = useState(""); // beste intro als startpunt
@@ -1347,25 +1511,31 @@ export default function App() {
       .catch(() => setKennisbank([]));
   };
 
-  if (!vacature) return <SetupScherm onSave={onSetup} introTemplate={introTemplate} />;
+  if (!vacature) return (
+    <SetupScherm onSave={onSetup} introTemplate={introTemplate} />
+  );
 
   const highlights = getHighlights(vacature.vacatureTekst);
   const ac = vacature.kleur || "#111111";
 
   const copy = () => {
+    // Sla vacaturedata op zodat recruiter-URL werkt
+    try { localStorage.setItem(`vacature-${vacature.slug}`, JSON.stringify(vacature)); } catch {}
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
   const tabs = [
-    { id: "chat", label: "Gesprek", icon: "💬" },
-    { id: "loopbaan", label: "Loopbaan", icon: "📍" },
-    { id: "impact", label: "Impact", icon: "📊" },
-    { id: "beheer", label: "Beheer", icon: "⚙️" },
+    { id: "chat", label: t("tab_chat"), icon: "💬" },
+    { id: "loopbaan", label: t("tab_loopbaan"), icon: "📍" },
+    { id: "impact", label: t("tab_impact"), icon: "📊" },
+    ...(!recruiterMode ? [{ id: "beheer", label: t("tab_beheer"), icon: "⚙️" }] : []),
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f4", fontFamily: "sans-serif", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "28px 16px" }}>
+    <>
+      <PrintStyles />
+        <div style={{ minHeight: "100vh", background: "#f5f5f4", fontFamily: "sans-serif", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "28px 16px" }}>
       <div style={{ width: "100%", maxWidth: 660, background: "#fff", borderRadius: 16, border: "0.5px solid #e5e7eb", overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
 
         {/* Accentlijn in bedrijfskleur */}
@@ -1387,12 +1557,14 @@ export default function App() {
         </div>
 
         {/* Download/link balk */}
-        <div style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="no-print" style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 11, color: "#9ca3af", flex: 1, fontFamily: "monospace" }}>cv.arjenvaalburg.nl/{vacature.slug}</span>
-          <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
-            {copied ? "Gekopieerd ✓" : "Kopieer link"}
-          </button>
-          <a href={`/${vacature.slug}.pdf`} download onClick={handlePdfDownload} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, textDecoration: "none" }}>↓ PDF</a>
+          {!recruiterMode && (
+            <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
+              {copied ? t("btn_copied") : t("btn_copy")}
+            </button>
+          )}
+          <button onClick={() => window.print()} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer" }}>{t("btn_pdf")}</button>
         </div>
 
         {/* Tabs */}
@@ -1409,28 +1581,25 @@ export default function App() {
           {tab === "chat" && (
             <div>
               {/* Introductietekst */}
-              <IntroEditor
-                introTekst={introTekst}
-                onChange={setIntroTekst}
-                onSaveAsTemplate={(tekst) => {
-                  setIntroTemplate(tekst);
-                  window.storage?.set("intro-template", tekst).catch(() => {});
-                }}
-                ac={ac}
-              />
+              {introTekst && (
+                <div style={{ padding: "14px 20px", borderBottom: "0.5px solid #e5e7eb", background: "#f9fafb" }}>
+                  <pre style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 13, lineHeight: 1.8, color: "#374151", whiteSpace: "pre-wrap" }}>{introTekst}</pre>
+                </div>
+              )}
               <ChatPanel chips={DEFAULT_CHIPS} vacatureTekst={vacature.vacatureTekst} vacatureSlug={vacature.slug} ac={ac} isFreelance={vacature.isFreelance !== false} kennisbank={kennisbank} qaOverrides={qaOverrides} stijlgeheugen={stijlgeheugen} />
             </div>
           )}
           {tab === "loopbaan" && <LoopbaanPanel highlights={highlights} ac={ac} />}
           {tab === "impact" && <ImpactPanel ac={ac} kennisbank={kennisbank} />}
-          {tab === "beheer" && <BeheerPanel vacature={vacature} onReset={() => setVacature(null)} kennisbank={kennisbank} onKennisbankChange={setKennisbank} qaOverrides={qaOverrides} onQaOverridesChange={setQaOverrides} stijlgeheugen={stijlgeheugen} onStijlgeheugenChange={setStijlgeheugen} />}
+          {tab === "beheer" && <BeheerPanel vacature={vacature} onReset={() => setVacature(null)} kennisbank={kennisbank} onKennisbankChange={setKennisbank} qaOverrides={qaOverrides} onQaOverridesChange={setQaOverrides} stijlgeheugen={stijlgeheugen} onStijlgeheugenChange={setStijlgeheugen} introTekst={introTekst} onIntroChange={setIntroTekst} onSaveAsTemplate={(tekst) => { setIntroTemplate(tekst); window.storage?.set("intro-template", tekst).catch(() => {}); }} ac={ac} />}
         </div>
 
         <div style={{ padding: "8px 20px", borderTop: "0.5px solid #e5e7eb", background: "#f9fafb", display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 11, color: "#9ca3af" }}>Sollicitatie {PROFIEL.naam} · 2026</span>
-          <span style={{ fontSize: 11, color: "#9ca3af" }}>Interactieve sollicitatie</span>
+          <span style={{ fontSize: 11, color: "#9ca3af" }}>{t("footer_left")}</span>
+          <span style={{ fontSize: 11, color: "#9ca3af" }}>{t("footer_right")}</span>
         </div>
       </div>
     </div>
+    </>
   );
 }
