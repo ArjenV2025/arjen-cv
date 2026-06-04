@@ -17,18 +17,37 @@ async function supaGet(slug) {
 
 async function supaSave(slug, data) {
   try {
-    const r = await fetch(`${SUPA_URL}/rest/v1/vacatures`, {
-      method: "POST",
-      headers: {
-        "apikey": SUPA_KEY,
-        "Authorization": `Bearer ${SUPA_KEY}`,
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=minimal"
-      },
-      body: JSON.stringify({ slug, data })
+    // Probeer eerst update (als slug bestaat), anders insert
+    const check = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}&select=id&limit=1`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
     });
-    console.log("supaSave status:", r.status);
-    if (!r.ok) { const t = await r.text(); console.error("supaSave error:", t); }
+    const existing = await check.json();
+
+    if (existing?.length > 0) {
+      // Update bestaande rij
+      const r = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}`, {
+        method: "PATCH",
+        headers: {
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data })
+      });
+      console.log("supaSave PATCH status:", r.status);
+    } else {
+      // Insert nieuwe rij
+      const r = await fetch(`${SUPA_URL}/rest/v1/vacatures`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ slug, data })
+      });
+      console.log("supaSave POST status:", r.status);
+    }
   } catch(e) { console.error("supaSave exception:", e); }
 }
 
@@ -1550,8 +1569,9 @@ export default function App() {
   const ac = vacature.kleur || "#111111";
 
   const copy = async () => {
+    console.log("COPY CLICKED — slug:", vacature.slug);
     // Sla vacaturedata op in Supabase zodat recruiter-URL werkt
-    try { await supaSave(vacature.slug, vacature); } catch {}
+    try { await supaSave(vacature.slug, vacature); } catch(e) { console.error("copy error:", e); }
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
