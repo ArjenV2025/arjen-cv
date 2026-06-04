@@ -63,15 +63,8 @@ function PrintStyles() {
         html, body {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
-          color-adjust: exact !important;
         }
-        /* Verberg alles behalve de kaart */
-        body > * { display: none !important; }
-        #cv-print-root, #cv-print-root * { display: revert !important; }
-        /* Verberg knoppen, tabs, beheer */
         .no-print { display: none !important; }
-        /* Loopbaan: altijd open */
-        .print-expand { max-height: none !important; overflow: visible !important; }
         * { box-shadow: none !important; }
       }
     `;
@@ -84,10 +77,6 @@ function PrintStyles() {
     };
   }, []);
   return null;
-}
-
-function printCV() {
-  window.print();
 }
 
 
@@ -1634,7 +1623,7 @@ export default function App() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "0.5px solid #e5e7eb" }}>
+        <div className="no-print" style={{ display: "flex", borderBottom: "0.5px solid #e5e7eb" }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => handleTabChange(t.id)} style={{ flex: 1, padding: "11px 4px", border: "none", borderBottom: tab === t.id ? `3px solid ${t.id === "beheer" ? "#374151" : ac}` : "3px solid transparent", background: "none", cursor: "pointer", fontSize: 12, fontWeight: tab === t.id ? 700 : 400, color: tab === t.id ? "#111" : "#6b7280", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
               <span>{t.icon}</span>{t.label}
