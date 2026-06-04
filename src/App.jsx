@@ -1457,7 +1457,13 @@ export default function App() {
     supaGet(slug).then(data => {
       console.log("supaGet data:", data);
       if (data) {
-        setVacature(data);
+        // Herstel volledige state
+        const { introTekst: it, kennisbank: kb, qaOverrides: qa, stijlgeheugen: sg, ...vac } = data;
+        setVacature(vac);
+        if (it) setIntroTekst(it);
+        if (kb) setKennisbank(kb);
+        if (qa) setQaOverrides(qa);
+        if (sg) setStijlgeheugen(sg);
         setTab("chat");
         setRecruiterMode(true);
       }
@@ -1572,8 +1578,15 @@ export default function App() {
 
   const copy = async () => {
     console.log("COPY CLICKED — slug:", vacature.slug);
-    // Sla vacaturedata op in Supabase zodat recruiter-URL werkt
-    try { await supaSave(vacature.slug, vacature); } catch(e) { console.error("copy error:", e); }
+    // Sla alle relevante state op in Supabase
+    const payload = {
+      ...vacature,
+      introTekst,
+      kennisbank: kennisbank || [],
+      qaOverrides: qaOverrides || {},
+      stijlgeheugen: stijlgeheugen || [],
+    };
+    try { await supaSave(vacature.slug, payload); } catch(e) { console.error("copy error:", e); }
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
