@@ -1452,8 +1452,10 @@ export default function App() {
   // ── URL-routing: laad vacature op basis van slug via Supabase ────────────
   useEffect(() => {
     const slug = window.location.pathname.replace(/^\//, '').trim();
-    if (!slug || slug === 'index.html') return;
+    console.log("URL slug detected:", slug);
+    if (!slug || slug === 'index.html') { console.log("No slug, showing setup"); return; }
     supaGet(slug).then(data => {
+      console.log("supaGet data:", data);
       if (data) {
         setVacature(data);
         setTab("chat");
