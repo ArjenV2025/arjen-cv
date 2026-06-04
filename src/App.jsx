@@ -290,46 +290,30 @@ function getHighlights(vacatureTekst) {
 
 // ─── VASTE Q&A ────────────────────────────────────────────────────────────────
 const QA = [
+  // Fallback antwoorden — alleen gebruikt als API tijdelijk niet bereikbaar is
+  // Primair gaan alle vragen naar de AI met volledige vacature-context
   { keys: ["vertel over jezelf", "stel jezelf voor", "wie ben je", "loop door je cv"],
-    a: "Ik ben iemand die al heel lang op het snijvlak werkt van 'wat willen we bereiken' en 'hoe gaan we dat dan doen' — niet als de man met het plan die het daarna overdraagt, maar als iemand die er doorheen zit. Strategie zonder draagvlak is papier, uitvoering zonder richting is rondrennen." },
+    a: "Ik ben een senior communicatie- en marketingprofessional met meer dan 20 jaar ervaring. De rode draad: ik verbind strategie met uitvoering." },
   { keys: ["zwakte", "minder goed", "verbeterpunt", "valkuil"],
-    a: "Ik kan ongeduldig worden als iets vastloopt terwijl de oplossing voor de hand ligt. Dan trek ik het liever zelf dan dat ik iemand de ruimte geef het zelf uit te zoeken. Bij Ncardia heb ik geleerd dat borging meer waard is dan snelheid — als het team het zelf heeft bedacht, blijft het ook als ik weg ben." },
-  { keys: ["weerstand", "mensen meenemen", "draagvlak", "overtuigen"],
-    a: "De slechtste aanpak is mensen proberen te overtuigen. Bij Merck had ik twaalf mensen die echt niet wilden. Twee dagen De Bono — iedereen moest ook de andere kant verdedigen. Op dag twee schreven ze zelf het implementatieplan. Weerstand omgezet in eigenaarschap, omdat het hun plan was geworden." },
-  { keys: ["mislukking", "fout gemaakt", "mislukt", "falen"],
-    a: "App & Web Lab. Ik had een KPI-dashboard gebouwd, de Staatsloterij was enthousiast — maar ik had maar één klant. Toen de performance problemen werden had ik geen buffer. Stekker eruit getrokken. Geleerd: nooit lanceren met één klant, eerder externe funding zoeken." },
-  { keys: ["leiderschapsstijl", "hoe leid je", "aansturen"],
-    a: "Coachend, maar niet soft. Ik geloof in eigenaarschap — mensen moeten het zelf willen en kunnen. Maar ik ben direct als iets niet goed gaat. Goede leiders zijn helder over verwachtingen en laten daarna los. Bij de Staatsloterij deed ik dat letterlijk: afdeling omgevormd tot Sales-as-a-Service en het team zelf verantwoordelijk gemaakt." },
-  { keys: ["pmo", "prince2", "programmamanagement", "methodiek", "scrum"],
-    a: "Prince2 Practitioner, dagelijks toegepast. VIM Group: vijf entiteiten, elf werkstromen, vijftig FTE — on time, within budget. Maar Prince2 is een middel, geen doel. Soms is een heldere weekstructuur effectiever dan een volledig Prince2-dossier. Ik schakel ook naar Scrum als de situatie dat vraagt." },
-  { keys: ["ai", "artificial intelligence", "eu ai act", "ai compliance"],
-    a: "Ik heb de AI Compliance Academy opgericht omdat organisaties AI adopteren zonder dat mensen weten wat ze doen. Mijn trainingen gaan over geletterdheid én governance: wat leg je vast, wie is verantwoordelijk. De EU AI Act is daarin een houvast. Maatschappelijk urgent, en onderschat." },
-  { keys: ["beschikbaarheid", "wanneer starten", "start", "wanneer beschikbaar"],
+    a: "Ik kan ongeduldig worden als iets vastloopt terwijl de oplossing voor de hand ligt." },
+  { keys: ["weerstand", "mensen meenemen", "draagvlak", "overtuigen", "hoe ga je om met weerstand"],
+    a: "De slechtste aanpak is mensen proberen te overtuigen. Bij Merck gebruikte ik De Bono's Six Hats." },
+  { keys: ["mislukking", "fout gemaakt", "mislukt", "falen", "vertel over een mislukking"],
+    a: "App & Web Lab. Één klant is geen businessmodel. Stekker eruit getrokken." },
+  { keys: ["leiderschapsstijl", "hoe leid je", "aansturen", "wat is je leiderschapsstijl"],
+    a: "Coachend, maar niet soft. Ik geloof in eigenaarschap." },
+  { keys: ["pmo", "prince2", "programmamanagement", "pmo-ervaring"],
+    a: "Prince2 Practitioner — dagelijks toegepast. VIM Group: vijf entiteiten samengevoegd, 50 FTE." },
+  { keys: ["ai", "artificial intelligence", "eu ai act", "ai compliance", "ervaring met ai"],
+    a: "Ik heb de AI Compliance Academy opgericht. Ik werk dagelijks met AI-tools." },
+  { keys: ["beschikbaarheid", "wanneer starten", "beschikbaarheid & tarief"],
     a: "BESCHIKBAARHEID_DYNAMIC" },
-  { keys: ["salaris", "tarief", "vergoeding", "pakket", "arbeidsvoorwaarden", "kosten"],
+  { keys: ["salaris", "tarief", "vergoeding", "pakket", "arbeidsvoorwaarden"],
     a: "SALARIS_DYNAMIC" },
-  { keys: ["sport", "hobby", "vrije tijd", "zeilen", "schaatsen", "brandweer", "buiten", "klussen"],
-    a: "Ik ben graag buiten en klus graag — dat geeft me rust en afstand van het werk. Ik zeil, schaats als het ijs het toelaat, en ben brandwacht in opleiding bij de Vrijwillige Brandweer in Bilthoven. En de Atlantische Oceaan oversteken naar de Caraïben staat nog op de lijst." },
-  { keys: ["persoonlijk", "mens", "wie ben je echt", "privé", "thuis", "gezin", "getrouwd", "dochter", "familie"],
-    a: "Getrouwd, vier dochters — twee zijn al het huis uit, twee nog niet. Ik ben graag buiten en klus graag, dat geeft me rust. En ik hou van water: ik schaats als het ijs het toelaat, zeil regelmatig, en wil ooit de Atlantische Oceaan oversteken naar de Caraïben. Dat staat op de lijst." },
-  { keys: ["wat maakt jou anders", "onderscheidt", "uniek", "toegevoegde waarde"],
-    a: "Drie dingen: ik doe strategie én uitvoering — geen handoff. Ik werk even goed op directieniveau als de werkvloer. En ik zorg voor borging: bij Ncardia draait het team nu zelfstandig, bij Merck schreef het team het implementatieplan zelf. Dat is voor mij het echte bewijs dat iets gelukt is." },
-  { keys: ["interim", "freelance", "veel gewisseld", "loyaliteit"],
-    a: "Ik ben het beste in situaties waar snel richting, structuur en resultaat nodig zijn — bijna per definitie tijdelijk. Na VIM Group, na Merck, na Ncardia — telkens stond er iets, was mijn rol klaar." },
-  { keys: ["te senior", "overkwalificatie", "te veel ervaring"],
-    a: "Mijn senioriteit is geen reden om me weg te zetten — het is een reden om me in te zetten. Ik heb de fouten al gemaakt, herken de patronen, hoef niet alles opnieuw uit te zoeken. Dat levert snelheid op. En ik zoek inhoudelijke uitdaging, geen status." },
-  { keys: ["geen sector", "andere sector", "niet uit de"],
-    a: "Klopt, ik kom niet altijd uit de sector. Wat ik meeneem is ervaring in complexe organisaties met veel belangen, waar strategie en uitvoering uit elkaar dreigen te vallen. Die dynamiek is sector-onafhankelijk. En ik leer snel — dat is een patroon in mijn loopbaan, geen bewering." },
-  { keys: ["vragen aan jullie", "eigen vragen", "wil je iets vragen"],
-    a: "Zeker. Wanneer is deze rol na twaalf maanden geslaagd — niet in activiteiten, maar in wat er dan anders is? En waar zit nu de meeste spanning: in de strategie, de uitvoering, of het meekrijgen van mensen?" },
-  { keys: ["grootste prestatie", "trots op", "hoogtepunt"],
-    a: "De Staatsloterij — omdat het zo onwaarschijnlijk was. Klantenservice omvormen tot winstmotor met mensen die alleen servicegesprekken gewend waren. Systeem en incentives veranderd, niet de mensen. 50% kostenreductie, 60% betere retentie. Dat heb ik nooit meer in die combinatie geëvenaard." },
-  { keys: ["cultuur", "omgeving", "type organisatie"],
-    a: "Professioneel maar niet bureaucratisch. Mensen die inhoudelijk zijn, meningen hebben en bereid zijn die te toetsen. De beste teams die ik heb meegemaakt hadden constructieve spanning — niet altijd eens, maar wel dezelfde kant op." },
-  { keys: ["feedback ontvangen", "kritiek ontvangen"],
-    a: "Ik probeer eerst echt te luisteren voor ik reageer. Makkelijker gezegd dan gedaan. De meest bruikbare feedback: 'Je neemt mensen soms te snel mee in je redenering zonder te checken of ze er nog bij zijn.' Dat klopt. Werk er nog steeds aan." },
-  { keys: ["motivatie", "energie", "drijfveer"],
-    a: "Het moment waarop een team dat vastliep ineens weet wat het moet doen. Niet de mijlpaal in het plan — het zichtbare moment van 'het klikt'. Dat is voor mij het echte bewijs dat iets gelukt is." },
+  { keys: ["sport", "hobby", "vrije tijd", "zeilen", "schaatsen", "brandweer", "buiten", "klussen", "wat voor sport doe je"],
+    a: "Zeilen als het kan, schaatsen als het ijs het toelaat. Brandwacht in opleiding bij VRU Bilthoven." },
+  { keys: ["persoonlijk", "privé", "gezin", "getrouwd", "dochter", "wie ben je buiten je cv"],
+    a: "Getrouwd, vier dochters. Woon in Bilthoven. Graag buiten en met mijn handen bezig." },
 ];
 
 function getLocal(q, isFreelance, qaOverrides) {
@@ -338,28 +322,28 @@ function getLocal(q, isFreelance, qaOverrides) {
     if (item.keys.some(k => lq.includes(k))) {
       const key = item.keys[0];
       const override = qaOverrides?.[key];
-      // Gebruik aangepast antwoord als dat bestaat
-      if (override?.customAnswer) {
-        if (override.customAnswer === "BESCHIKBAARHEID_DYNAMIC") {
-          // val through to dynamic handling below
-        } else if (override.customAnswer === "SALARIS_DYNAMIC") {
-          // val through
-        } else {
-          return override.customAnswer;
-        }
+
+      // Handmatig aangepast antwoord — gebruik altijd
+      if (override?.customAnswer &&
+          override.customAnswer !== "BESCHIKBAARHEID_DYNAMIC" &&
+          override.customAnswer !== "SALARIS_DYNAMIC") {
+        return override.customAnswer;
       }
-      // Dynamic answers
+
+      // Beschikbaarheid en tarief — altijd lokaal (geen AI nodig)
       if (item.a === "BESCHIKBAARHEID_DYNAMIC") {
         return isFreelance
           ? "Beschikbaar als freelancer, 4 à 5 dagen per week. Eén dag houd ik vrij voor AI Compliance Academy. Geen lange opzegtermijnen — ik kan snel starten."
-          : "Beschikbaar voor een vaste rol. Ik hanteer een normale opzegtermijn — laten we dat in het gesprek afstemmen. Eén dag per week houd ik vrij voor AI Compliance Academy; dat is bespreekbaar afhankelijk van de afspraken.";
+          : "Beschikbaar voor een vaste rol. Ik hanteer een normale opzegtermijn. Eén dag per week houd ik vrij voor AI Compliance Academy; dat is bespreekbaar.";
       }
       if (item.a === "SALARIS_DYNAMIC") {
         return isFreelance
-          ? "Ik werk op basis van een dagtarief. Dat hangt af van de looptijd, de scope en wat er verder in de afspraken zit — reiskosten, parkeren, kosten van derden. Ik praat daar graag openlijk over, geen verborgen agenda."
-          : "Dat hangt af van de scope van de rol, de verantwoordelijkheid, en wat er verder in het pakket zit — flexibiliteit, opleidingsbudget, mobiliteitsregeling. Ik noem liever een bandbreedte in een gesprek dan een getal hier.";
+          ? "Ik werk op basis van een dagtarief — afhankelijk van looptijd, scope en afspraken. Geen verborgen agenda."
+          : "Dat hangt af van scope, verantwoordelijkheid en het totale pakket. Ik noem liever een bandbreedte in een gesprek.";
       }
-      return item.a;
+
+      // Alle andere vragen: stuur naar AI (return null = AI pakt het op)
+      return null;
     }
   }
   return null;
@@ -1120,7 +1104,12 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
         const key = item.keys[0];
         const override = edits[key] || {};
         const isOpen = open === key;
-        const displayAnswer = override.customAnswer || item.a;
+        const resolveAnswer = (a) => {
+          if (a === "BESCHIKBAARHEID_DYNAMIC") return "Beschikbaar als freelancer, 4 à 5 dagen per week. Één dag houd ik vrij voor AI Compliance Academy.";
+          if (a === "SALARIS_DYNAMIC") return "Ik werk op basis van een dagtarief — afhankelijk van looptijd en scope.";
+          return a;
+        };
+        const displayAnswer = resolveAnswer(override.customAnswer || item.a);
         const rating = override.rating;
 
         return (
