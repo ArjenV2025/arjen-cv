@@ -4,29 +4,38 @@ import { useState, useRef, useEffect } from "react";
 function PrintStyles() {
   useEffect(() => {
     const style = document.createElement('style');
-    style.id = 'print-styles';
+    style.id = 'cv-print-styles';
     style.textContent = `
       @media print {
-        @page { margin: 1.5cm; size: A4; }
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        button, a[download] { display: none !important; }
-        /* Verberg beheer-tab en navigatiebalk knoppen */
-        [data-print-hide] { display: none !important; }
-        /* Zorg dat alle content zichtbaar is */
-        [data-print-show] { display: block !important; max-height: none !important; overflow: visible !important; }
-        /* Netjes afdrukken */
+        @page { margin: 1.2cm 1.5cm; size: A4 portrait; }
+        html, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        /* Verberg alles behalve de kaart */
+        body > * { display: none !important; }
+        #cv-print-root, #cv-print-root * { display: revert !important; }
+        /* Verberg knoppen, tabs, beheer */
+        .no-print { display: none !important; }
+        /* Loopbaan: altijd open */
+        .print-expand { max-height: none !important; overflow: visible !important; }
         * { box-shadow: none !important; }
       }
     `;
-    if (!document.getElementById('print-styles')) {
+    if (!document.getElementById('cv-print-styles')) {
       document.head.appendChild(style);
     }
     return () => {
-      const el = document.getElementById('print-styles');
+      const el = document.getElementById('cv-print-styles');
       if (el) el.remove();
     };
   }, []);
   return null;
+}
+
+function printCV() {
+  window.print();
 }
 
 
@@ -1386,6 +1395,22 @@ export default function App() {
   const [vacature, setVacature] = useState(null);
   const [tab, setTab] = useState("chat");
   const [copied, setCopied] = useState(false);
+  const [recruiterMode, setRecruiterMode] = useState(false);
+
+  // ── URL-routing: laad vacature op basis van slug in URL ──────────────────
+  useEffect(() => {
+    const slug = window.location.pathname.replace(/^\//, '').trim();
+    if (!slug || slug === 'index.html') return;
+    try {
+      const stored = localStorage.getItem(`vacature-${slug}`);
+      if (stored) {
+        const data = JSON.parse(stored);
+        setVacature(data);
+        setTab("chat");
+        setRecruiterMode(true); // recruiter ziet geen beheer
+      }
+    } catch {}
+  }, []);
 
   const [kennisbank, setKennisbank] = useState([]);
   const [introTekst, setIntroTekst] = useState("");
@@ -1494,6 +1519,8 @@ export default function App() {
   const ac = vacature.kleur || "#111111";
 
   const copy = () => {
+    // Sla vacaturedata op zodat recruiter-URL werkt
+    try { localStorage.setItem(`vacature-${vacature.slug}`, JSON.stringify(vacature)); } catch {}
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
@@ -1502,7 +1529,7 @@ export default function App() {
     { id: "chat", label: t("tab_chat"), icon: "💬" },
     { id: "loopbaan", label: t("tab_loopbaan"), icon: "📍" },
     { id: "impact", label: t("tab_impact"), icon: "📊" },
-    { id: "beheer", label: t("tab_beheer"), icon: "⚙️" },
+    ...(!recruiterMode ? [{ id: "beheer", label: t("tab_beheer"), icon: "⚙️" }] : []),
   ];
 
   return (
@@ -1530,11 +1557,13 @@ export default function App() {
         </div>
 
         {/* Download/link balk */}
-        <div style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="no-print" style={{ padding: "9px 20px", background: "#f9fafb", borderBottom: "0.5px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 11, color: "#9ca3af", flex: 1, fontFamily: "monospace" }}>cv.arjenvaalburg.nl/{vacature.slug}</span>
-          <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
-            {copied ? t("btn_copied") : t("btn_copy")}
-          </button>
+          {!recruiterMode && (
+            <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
+              {copied ? t("btn_copied") : t("btn_copy")}
+            </button>
+          )}
           <button onClick={() => window.print()} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer" }}>{t("btn_pdf")}</button>
         </div>
 
