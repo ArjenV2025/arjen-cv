@@ -64,7 +64,14 @@ function PrintStyles() {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
+        /* Verberg knoppen en tabs */
         .no-print { display: none !important; }
+        /* Verwijder scroll-limieten */
+        div[style*="overflow"] { overflow: visible !important; max-height: none !important; }
+        div[style*="maxHeight"] { max-height: none !important; overflow: visible !important; }
+        /* Verberg korte samenvatting, toon altijd de lange versie */
+        .loopbaan-kort { display: none !important; }
+        .loopbaan-lang { display: block !important; }
         * { box-shadow: none !important; }
       }
     `;
@@ -820,6 +827,18 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
 function LoopbaanPanel({ highlights, ac }) {
   const [open, setOpen] = useState({});
   const color = ac || "#111";
+
+  // Bij printen: klap alles open
+  useEffect(() => {
+    const beforePrint = () => {
+      const allOpen = {};
+      LOOPBAAN.forEach((_, i) => { allOpen[i] = true; });
+      setOpen(allOpen);
+    };
+    window.addEventListener('beforeprint', beforePrint);
+    return () => window.removeEventListener('beforeprint', beforePrint);
+  }, []);
+
   return (
     <div style={{ padding: "16px 20px", overflowY: "auto", maxHeight: 420 }}>
       {LOOPBAAN.map((item, i) => {
@@ -846,10 +865,10 @@ function LoopbaanPanel({ highlights, ac }) {
                 <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap", marginLeft: 8 }}>{item.periode.replace(/\d{4}[–\-]\d{4}|\d{4}[–\-]nu|\d{4}[–\-]heden|\d{4}/g, "").replace(/^[–\-\s]+|[–\-\s]+$/g, "") || "—"}</span>
               </div>
               {!isOpen && (
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: isHighlight ? color + "99" : "#9ca3af", lineHeight: 1.4 }}>{item.kort}</p>
+                <p className="loopbaan-kort" style={{ margin: "4px 0 0", fontSize: 12, color: isHighlight ? color + "99" : "#9ca3af", lineHeight: 1.4 }}>{item.kort}</p>
               )}
               {isOpen && (
-                <div style={{ marginTop: 8 }}>
+                <div className="loopbaan-lang" style={{ marginTop: 8 }}>
                   <p style={{ margin: "0 0 8px", fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{item.lang}</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {item.tags.map(t => <span key={t} style={{ padding: "2px 9px", borderRadius: 20, fontSize: 11,
