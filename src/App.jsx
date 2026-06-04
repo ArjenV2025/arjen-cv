@@ -1397,19 +1397,17 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [recruiterMode, setRecruiterMode] = useState(false);
 
-  // ── URL-routing: laad vacature op basis van slug in URL ──────────────────
+  // ── URL-routing: laad vacature op basis van slug via Supabase ────────────
   useEffect(() => {
     const slug = window.location.pathname.replace(/^\//, '').trim();
     if (!slug || slug === 'index.html') return;
-    try {
-      const stored = localStorage.getItem(`vacature-${slug}`);
-      if (stored) {
-        const data = JSON.parse(stored);
+    supaGet(slug).then(data => {
+      if (data) {
         setVacature(data);
         setTab("chat");
-        setRecruiterMode(true); // recruiter ziet geen beheer
+        setRecruiterMode(true);
       }
-    } catch {}
+    }).catch(() => {});
   }, []);
 
   const [kennisbank, setKennisbank] = useState([]);
@@ -1518,9 +1516,9 @@ export default function App() {
   const highlights = getHighlights(vacature.vacatureTekst);
   const ac = vacature.kleur || "#111111";
 
-  const copy = () => {
-    // Sla vacaturedata op zodat recruiter-URL werkt
-    try { localStorage.setItem(`vacature-${vacature.slug}`, JSON.stringify(vacature)); } catch {}
+  const copy = async () => {
+    // Sla vacaturedata op in Supabase zodat recruiter-URL werkt
+    try { await supaSave(vacature.slug, vacature); } catch {}
     navigator.clipboard?.writeText(`https://cv.arjenvaalburg.nl/${vacature.slug}`).catch(() => {});
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
