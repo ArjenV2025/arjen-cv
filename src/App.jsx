@@ -1,6 +1,35 @@
 import { useState, useRef, useEffect } from "react";
 
-// ─── LABELS (NL) ─────────────────────────────────────────────────────────────
+// ─── PRINT STYLES ─────────────────────────────────────────────────────────────
+function PrintStyles() {
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'print-styles';
+    style.textContent = `
+      @media print {
+        @page { margin: 1.5cm; size: A4; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        button, a[download] { display: none !important; }
+        /* Verberg beheer-tab en navigatiebalk knoppen */
+        [data-print-hide] { display: none !important; }
+        /* Zorg dat alle content zichtbaar is */
+        [data-print-show] { display: block !important; max-height: none !important; overflow: visible !important; }
+        /* Netjes afdrukken */
+        * { box-shadow: none !important; }
+      }
+    `;
+    if (!document.getElementById('print-styles')) {
+      document.head.appendChild(style);
+    }
+    return () => {
+      const el = document.getElementById('print-styles');
+      if (el) el.remove();
+    };
+  }, []);
+  return null;
+}
+
+
 const LABELS = {
   setup_title: "Nieuwe sollicitatie",
   setup_sub: "Vul de vacature in — de app past zich automatisch aan.",
@@ -1477,6 +1506,8 @@ export default function App() {
   ];
 
   return (
+    <>
+      <PrintStyles />
         <div style={{ minHeight: "100vh", background: "#f5f5f4", fontFamily: "sans-serif", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "28px 16px" }}>
       <div style={{ width: "100%", maxWidth: 660, background: "#fff", borderRadius: 16, border: "0.5px solid #e5e7eb", overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
 
@@ -1504,7 +1535,7 @@ export default function App() {
           <button onClick={copy} style={{ padding: "5px 11px", background: "transparent", border: "0.5px solid #d1d5db", borderRadius: 7, cursor: "pointer", fontSize: 11, color: "#6b7280" }}>
             {copied ? t("btn_copied") : t("btn_copy")}
           </button>
-          <a href={`/${vacature.slug}.pdf`} download onClick={handlePdfDownload} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, textDecoration: "none" }}>{t("btn_pdf")}</a>
+          <button onClick={() => window.print()} style={{ padding: "5px 13px", background: ac, color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer" }}>{t("btn_pdf")}</button>
         </div>
 
         {/* Tabs */}
@@ -1540,5 +1571,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </>
   );
 }
