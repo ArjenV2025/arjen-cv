@@ -1,5 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPA_URL = "https://nwoxxxsynrrjomgxikqm.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53b3h4eHN5bnJyam9tZ3hpa3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjU2ODQsImV4cCI6MjA5NjE0MTY4NH0.e6lzCJdkRzFwc1pstPlPEJ2MeGSg3KJgU7jtvNE4AHU";
+
+async function supaGet(slug) {
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/vacatures?slug=eq.${slug}&select=data&limit=1`, {
+      headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
+    });
+    const rows = await r.json();
+    console.log("supaGet:", rows);
+    return rows?.[0]?.data || null;
+  } catch(e) { console.error("supaGet error:", e); return null; }
+}
+
+async function supaSave(slug, data) {
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/vacatures`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPA_KEY,
+        "Authorization": `Bearer ${SUPA_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({ slug, data })
+    });
+    console.log("supaSave status:", r.status);
+    if (!r.ok) { const t = await r.text(); console.error("supaSave error:", t); }
+  } catch(e) { console.error("supaSave exception:", e); }
+}
+
+
 // ─── PRINT STYLES ─────────────────────────────────────────────────────────────
 function PrintStyles() {
   useEffect(() => {
