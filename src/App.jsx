@@ -318,109 +318,32 @@ const QA = [
 
 function getLocal(q, isFreelance, qaOverrides) {
   const lq = q.toLowerCase();
-  for (const item of QA) {
-    if (item.keys.some(k => lq.includes(k))) {
-      const key = item.keys[0];
-      const override = qaOverrides?.[key];
 
-      // Handmatig aangepast antwoord — gebruik altijd
-      if (override?.customAnswer &&
-          override.customAnswer !== "BESCHIKBAARHEID_DYNAMIC" &&
-          override.customAnswer !== "SALARIS_DYNAMIC") {
-        return override.customAnswer;
-      }
-
-      // Beschikbaarheid en tarief — altijd lokaal (geen AI nodig)
-      if (item.a === "BESCHIKBAARHEID_DYNAMIC") {
-        return isFreelance
-          ? "Beschikbaar als freelancer, 4 à 5 dagen per week. Eén dag houd ik vrij voor AI Compliance Academy. Geen lange opzegtermijnen — ik kan snel starten."
-          : "Beschikbaar voor een vaste rol. Ik hanteer een normale opzegtermijn. Eén dag per week houd ik vrij voor AI Compliance Academy; dat is bespreekbaar.";
-      }
-      if (item.a === "SALARIS_DYNAMIC") {
-        return isFreelance
-          ? "Ik werk op basis van een dagtarief — afhankelijk van looptijd, scope en afspraken. Geen verborgen agenda."
-          : "Dat hangt af van scope, verantwoordelijkheid en het totale pakket. Ik noem liever een bandbreedte in een gesprek.";
-      }
-
-      // Alle andere vragen: stuur naar AI (return null = AI pakt het op)
-      return null;
+  // 1. Zoek goedgekeurd/geredigeerd antwoord in Beheer
+  for (const [key, override] of Object.entries(qaOverrides || {})) {
+    if (lq.includes(key) && override?.rating !== "down" && override?.customAnswer &&
+        override.customAnswer !== "BESCHIKBAARHEID_DYNAMIC" &&
+        override.customAnswer !== "SALARIS_DYNAMIC") {
+      return override.customAnswer;
     }
   }
+
+  // 2. Dynamische antwoorden (geen AI nodig)
+  if (lq.includes("beschikbaar") || lq.includes("wanneer starten") || lq.includes("tarief & beschik")) {
+    return isFreelance
+      ? "Beschikbaar als freelancer, 4 à 5 dagen per week. Eén dag houd ik vrij voor AI Compliance Academy. Geen lange opzegtermijnen — ik kan snel starten."
+      : "Beschikbaar voor een vaste rol. Ik hanteer een normale opzegtermijn. Eén dag per week houd ik vrij voor AI Compliance Academy; dat is bespreekbaar.";
+  }
+  if (lq.includes("salaris") || lq.includes("tarief") || lq.includes("vergoeding") || lq.includes("arbeidsvoorwaarden")) {
+    return isFreelance
+      ? "Ik werk op basis van een dagtarief — afhankelijk van looptijd, scope en afspraken. Geen verborgen agenda."
+      : "Dat hangt af van scope, verantwoordelijkheid en het totale pakket. Ik noem liever een bandbreedte in een gesprek.";
+  }
+
+  // 3. Alles else → AI
   return null;
 }
 
-// ─── AI CALL ─────────────────────────────────────────────────────────────────
-
-// ─── AI RESPONSE CLEANUP ─────────────────────────────────────────────────────
-// Verwijdert AI-kenmerken uit elke respons
-function cleanAI(text) {
-  if (!text) return text;
-  return text
-    // strip markdown
-    .replace(/\*\*([^*]+)\*\*/g, "$1")   // bold
-    .replace(/\*([^*]+)\*/g, "$1")        // italic
-    .replace(/#{1,6}\s+/g, "")            // headers
-    .replace(/^[-*]\s+/gm, "")            // bullet points
-    // strip AI preamble
-    .replace(/^[^\n]*?(?:hier is|introductietekst voor|tekst voor)[^\n]*\n+/i, "")
-    .replace(/^[^\n]*?(?:hier is|introductietekst voor|tekst voor)[^\n]*:/i, "")
-    .replace(/precies/gi, (match) => {
-      // Vervang contextueel
-      return "";
-    })
-    .replace(/dat is precies /gi, "dat is ")
-    .replace(/precies zoals /gi, "zoals ")
-    .replace(/precies wat /gi, "wat ")
-    .replace(/precies waarom /gi, "daarom ")
-    .replace(/precies de combinatie/gi, "de combinatie")
-    .replace(/precies waar /gi, "daar ")
-    .replace(/precies dat /gi, "dat ")
-    .replace(/precies zo /gi, "zo ")
-    .replace(/precies/gi, "")
-    .replace(/  +/g, " ")
-    .trim();
-}
-
-function buildContext(vacatureTekst, isFreelance, kennisbank, stijlgeheugen) {
-  const contractContext = isFreelance
-    ? `Je solliciteert als freelancer/interim. Benadruk beschikbaarheid, snelheid, geen overhead, directe impact. Je hebt bewust voor dit model gekozen omdat je het beste bent in situaties waar snel richting, structuur en resultaat nodig zijn.`
-    : `Je solliciteert op een VASTE BAAN. Benadruk dat je na jaren bouwen ook graag bij bent als het bestendigd wordt — de oogst, de optimalisatie, de lange termijn. Je hebt veel opgebouwd voor anderen; nu wil je ook zelf de vruchten plukken van wat je opbouwt. Continuïteit als meerwaarde, niet als beperking.`;
-
-  // Kennisbank-blokken samenvoegen
-  const kbTekst = (kennisbank || [])
-    .filter(b => b.tekst?.trim())
-    .map(b => `[${b.titel || b.cat}]\n${b.tekst.trim()}`)
-    .join("\n\n");
-
-  // Stijlgeheugen — geleerde voorkeuren
-  const stijlTekst = (stijlgeheugen || [])
-    .map(s => s.observatie).filter(Boolean).join(" ");
-
-  return `Je bent Arjen Vaalburg, 55 jaar, programmamanager en strategisch adviseur. ${contractContext}
-
-TOON & STIJL (verplicht):
-Schrijf in eerste persoon, gewone spreektaal. Korte tot middellange zinnen — één zin, één punt. Gedachtestreepje (—) voor scherpe bijzin. Concrete cijfers waar mogelijk. Warm maar zakelijk, nooit informeel of joviaal. Bij persoonlijke vragen gewoon persoonlijk — NOOIT terugvallen op werkervaring. Max 4 zinnen, geen bullets.
-
-GOEDE FORMULERINGEN: "wat mij aanspreekt", "voor mij begint", "ik vind het belangrijk dat", "ik zorg dat", "ik breng structuur aan", "mijn ervaring ligt op het snijvlak van", "de rode draad in mijn loopbaan is", "ik neem mensen mee", "ik maak plannen concreet".
-
-VERBODEN — gebruik deze woorden en uitdrukkingen NOOIT:
-precies, executiekracht, operationalisering, betekenisgeving, rolverheldering, strategische alignment, faciliteren (gebruik: helpen / zorgen dat), borgen (gebruik: zorgen dat het blijft staan), passie, out-of-the-box, spin in het web, duizendpoot, de ideale kandidaat, op het lijf geschreven, stakeholdermanagement (in combinatie met andere jargonwoorden). Gebruik nooit "Hoi" of "Hey" als aanhef — altijd "Beste [naam]", "Dag [naam]" of "Geachte [naam]".
-
-GEEN AFSLUITENDE SAMENVATTING: eindig een antwoord nooit met een zin die samenvat wat je net zei of onderstreept dat je er goed in bent. Zeg het één keer goed, dan is het klaar.` + (stijlTekst ? `
-
-PERSOONLIJKE STIJLVOORKEUR (geleerd uit eigen correcties):
-${stijlTekst}` : "") + `
-
-ACHTERGROND: PMO VIM Group/PŸUR (Prince2, 50 FTE, 11 werkstromen), Global Head Comms Merck KGaA (50.000+ mwk, De Bono, €100k besparing), Head Brand Ncardia (HubSpot end-to-end), Hoofd KS Staatsloterij (60% retentie↑, Sales-as-a-Service), Head Strategy Ogilvy Amsterdam, AI Compliance Academy (2025). NIMA-C, Prince2, Scrum PO/SM.
-
-PERSOONLIJK: getrouwd, vier dochters (twee het huis uit, twee nog thuis), woont in Bilthoven. Graag buiten, klust graag — geeft rust en afstand. Zeilt, schaatst als het ijs het toelaat, brandwacht in opleiding bij VRU Bilthoven. Ex-voorzitter en coach waterpolovereniging. Wil OOIT de Atlantische Oceaan oversteken naar de Caraïben — staat op de lijst maar is nog niet gedaan.
-
-VACATURE CONTEXT:
-${vacatureTekst || "Geen vacature opgegeven."}` + (kbTekst ? `
-
-EXTRA CONTEXT (kennisbank — gebruik dit bij relevante vragen):
-${kbTekst}` : "");
-}
 
 async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) {
   try {
@@ -709,7 +632,7 @@ function usePalette(ac) {
   };
 }
 
-function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennisbank, qaOverrides, stijlgeheugen }) {
+function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennisbank, qaOverrides, stijlgeheugen, onNewAIAnswer }) {
   const pal = usePalette(ac);
   const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState("");
@@ -746,15 +669,23 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
     setTyping(true);
     const local = getLocal(text, isFreelance, qaOverrides);
     let answer;
+    let fromAI = false;
     if (local) {
       await new Promise(r => setTimeout(r, 700 + Math.random() * 300));
       answer = local;
     } else {
       answer = await callAI(text, vacatureTekst, isFreelance, kennisbank, stijlgeheugen);
+      fromAI = true;
     }
     setTyping(false);
     setMsgs(m => [...m, { who: "av", text: answer }]);
     setChipsHidden(false);
+
+    // AI-antwoord opslaan in qaOverrides ter beoordeling in Beheer
+    if (fromAI && answer && onNewAIAnswer) {
+      onNewAIAnswer(text, answer);
+    }
+
     transcriptRef.current = [...transcriptRef.current, { ts: Date.now(), q: text, a: answer, type: local ? "chip" : "free" }];
     saveTranscript(transcriptRef.current);
   };
@@ -1100,67 +1031,89 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
           </div>
         </div>
       )}
-      {QA.map((item, idx) => {
-        const key = item.keys[0];
-        const override = edits[key] || {};
-        const isOpen = open === key;
-        const resolveAnswer = (a) => {
-          if (a === "BESCHIKBAARHEID_DYNAMIC") return "Beschikbaar als freelancer, 4 à 5 dagen per week. Één dag houd ik vrij voor AI Compliance Academy.";
-          if (a === "SALARIS_DYNAMIC") return "Ik werk op basis van een dagtarief — afhankelijk van looptijd en scope.";
-          return a;
-        };
-        const displayAnswer = resolveAnswer(override.customAnswer || item.a);
-        const rating = override.rating;
+      {/* Chip-vragen zonder antwoord nog */}
+      {(() => {
+        // Verzamel alle chip-vragen
+        const allChips = DEFAULT_CHIPS.flatMap(g => g.chips);
+        // Toon pending/nieuwe AI antwoorden bovenaan
+        const pendingItems = Object.entries(edits)
+          .filter(([, v]) => v?.customAnswer)
+          .sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+        // Chip-vragen zonder antwoord onderaan
+        const unanswered = allChips.filter(c =>
+          !Object.keys(edits).some(k => c.toLowerCase().includes(k) || k.includes(c.toLowerCase().slice(0,15)))
+        );
 
-        return (
-          <div key={key} style={{ marginBottom: 7, border: `0.5px solid ${rating === "up" ? "#bbf7d0" : rating === "down" || rating === "edited" ? "#fde68a" : "#e5e7eb"}`, borderRadius: 10, overflow: "hidden" }}>
-            <div onClick={() => setOpen(isOpen ? null : key)}
-              style={{ padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: isOpen ? "#f9fafb" : "#fff" }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#374151" }}>{item.keys[0]}</p>
-                {!isOpen && <p style={{ margin: "2px 0 0", fontSize: 12, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 360 }}>{displayAnswer.slice(0, 80)}…</p>}
-              </div>
-              <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 8, flexShrink: 0 }}>
-                {rating === "up" && <span style={{ fontSize: 14 }}>👍</span>}
-                {(rating === "down" || rating === "edited") && <span style={{ fontSize: 14 }}>✏️</span>}
-                {learning[key] && <span style={{ fontSize: 10, color: "#9ca3af", fontStyle: "italic" }}>leert…</span>}
-                <span style={{ fontSize: 11, color: "#9ca3af" }}>{isOpen ? "▲" : "▼"}</span>
-              </div>
-            </div>
-            {isOpen && (
-              <div style={{ padding: "12px 14px", borderTop: "0.5px solid #f3f4f6" }}>
-                {/* Huidig antwoord */}
-                <textarea
-                  value={displayAnswer}
-                  onChange={e => { setRating(key, "edited"); setCustomAnswer(key, e.target.value); }}
-                  style={{ width: "100%", minHeight: 90, padding: "8px 10px", borderRadius: 7, border: "0.5px solid #d1d5db", fontSize: 13, fontFamily: "sans-serif", lineHeight: 1.65, resize: "vertical", boxSizing: "border-box", color: "#374151" }}
-                />
-                {/* Acties */}
-                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <button onClick={() => setRating(key, "up")} style={{ padding: "5px 12px", borderRadius: 7, border: `1px solid ${rating === "up" ? "#22c55e" : "#d1d5db"}`, background: rating === "up" ? "#f0fdf4" : "#fff", cursor: "pointer", fontSize: 12, color: rating === "up" ? "#15803d" : "#6b7280" }}>
-                    👍 Goed zo
-                  </button>
-                  <button onClick={() => regenerate(item)} disabled={!!regenerating[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #d1d5db", background: "#fff", cursor: "pointer", fontSize: 12, color: "#6b7280" }}>
-                    {regenerating[key] ? t("sg_learning") : t("sg_regen")}
-                  </button>
-                  {override.customAnswer && <>
-                    <span style={{ fontSize: 11, color: "#9ca3af" }}>Sla op als:</span>
-                    <button onClick={() => commitLearn(key, "stijl")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bfdbfe", background: "#eff6ff", cursor: "pointer", fontSize: 12, color: "#1d4ed8" }}>
-                      {learning[key] === "stijl" ? t("sg_learning") : t("sg_stijl_btn")}
-                    </button>
-                    <button onClick={() => commitLearn(key, "feit")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bbf7d0", background: "#f0fdf4", cursor: "pointer", fontSize: 12, color: "#15803d" }}>
-                      {learning[key] === "feit" ? t("sg_learning") : t("sg_feit_btn")}
-                    </button>
-                    <button onClick={() => save({ ...edits, [key]: {} })} style={{ padding: "5px 10px", borderRadius: 7, border: "0.5px solid #fca5a5", background: "#fff", cursor: "pointer", fontSize: 11, color: "#dc2626" }}>
-                      ↩ Origineel
-                    </button>
-                  </>}
+        const renderItem = (key, vraag, antwoord, rating, isPending) => {
+          const isOpen = open === key;
+          const borderColor = rating === "up" ? "#bbf7d0" : rating === "down" || rating === "edited" ? "#fde68a" : isPending ? "#bfdbfe" : "#e5e7eb";
+          const bgBadge = isPending && !rating ? "#eff6ff" : null;
+
+          return (
+            <div key={key} style={{ marginBottom: 7, border: `0.5px solid ${borderColor}`, borderRadius: 10, overflow: "hidden" }}>
+              <div onClick={() => setOpen(isOpen ? null : key)}
+                style={{ padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: isOpen ? "#f9fafb" : (bgBadge || "#fff") }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#374151" }}>{vraag}</p>
+                    {isPending && !rating && <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 10, background: "#dbeafe", color: "#1d4ed8" }}>nieuw — te beoordelen</span>}
+                  </div>
+                  {!isOpen && antwoord && <p style={{ margin: "2px 0 0", fontSize: 12, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 360 }}>{antwoord.slice(0, 80)}…</p>}
+                  {!isOpen && !antwoord && <p style={{ margin: "2px 0 0", fontSize: 12, color: "#d1d5db", fontStyle: "italic" }}>Nog geen antwoord — wordt door AI gegenereerd bij eerste vraag</p>}
+                </div>
+                <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 8, flexShrink: 0 }}>
+                  {rating === "up" && <span style={{ fontSize: 14 }}>👍</span>}
+                  {(rating === "down" || rating === "edited") && <span style={{ fontSize: 14 }}>✏️</span>}
+                  {learning[key] && <span style={{ fontSize: 10, color: "#9ca3af", fontStyle: "italic" }}>leert…</span>}
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
               </div>
+              {isOpen && (
+                <div style={{ padding: "12px 14px", borderTop: "0.5px solid #f3f4f6" }}>
+                  <textarea
+                    value={antwoord || ""}
+                    onChange={e => { setRating(key, "edited"); setCustomAnswer(key, e.target.value); }}
+                    placeholder="Schrijf hier een antwoord — of klik 🔄 voor een AI-versie"
+                    style={{ width: "100%", minHeight: 90, padding: "8px 10px", borderRadius: 7, border: "0.5px solid #d1d5db", fontSize: 13, fontFamily: "sans-serif", lineHeight: 1.65, resize: "vertical", boxSizing: "border-box", color: "#374151" }}
+                  />
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <button onClick={() => setRating(key, "up")} style={{ padding: "5px 12px", borderRadius: 7, border: `1px solid ${rating === "up" ? "#22c55e" : "#d1d5db"}`, background: rating === "up" ? "#f0fdf4" : "#fff", cursor: "pointer", fontSize: 12, color: rating === "up" ? "#15803d" : "#6b7280" }}>
+                      👍 Goed zo
+                    </button>
+                    <button onClick={() => regenerate({ keys: [key], a: "" })} disabled={!!regenerating[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #d1d5db", background: "#fff", cursor: "pointer", fontSize: 12, color: "#6b7280" }}>
+                      {regenerating[key] ? t("sg_learning") : t("sg_regen")}
+                    </button>
+                    {antwoord && <>
+                      <span style={{ fontSize: 11, color: "#9ca3af" }}>Sla op als:</span>
+                      <button onClick={() => commitLearn(key, "stijl")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bfdbfe", background: "#eff6ff", cursor: "pointer", fontSize: 12, color: "#1d4ed8" }}>
+                        {learning[key] === "stijl" ? t("sg_learning") : t("sg_stijl_btn")}
+                      </button>
+                      <button onClick={() => commitLearn(key, "feit")} disabled={!!learning[key]} style={{ padding: "5px 12px", borderRadius: 7, border: "0.5px solid #bbf7d0", background: "#f0fdf4", cursor: "pointer", fontSize: 12, color: "#15803d" }}>
+                        {learning[key] === "feit" ? t("sg_learning") : t("sg_feit_btn")}
+                      </button>
+                      <button onClick={() => save({ ...edits, [key]: {} })} style={{ padding: "5px 10px", borderRadius: 7, border: "0.5px solid #fca5a5", background: "#fff", cursor: "pointer", fontSize: 11, color: "#dc2626" }}>
+                        ↩ Wis
+                      </button>
+                    </>}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        return (
+          <>
+            {pendingItems.map(([key, v]) => renderItem(key, v.vraag || key, v.customAnswer, v.rating, true))}
+            {unanswered.length > 0 && (
+              <div style={{ margin: "12px 0 6px" }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.06em", textTransform: "uppercase" }}>Chip-vragen zonder antwoord</p>
+              </div>
             )}
-          </div>
+            {unanswered.map(chip => renderItem(chip.toLowerCase().slice(0,60), chip, "", null, false))}
+          </>
         );
-      })}
+      })()}
     </div>
   );
 }
@@ -1170,10 +1123,11 @@ function AntwoordenEditor({ qaOverrides, onChange, stijlgeheugen, onStijlgeheuge
 // Gebruik voor: nieuwe projecten, STAR-cases, CV-updates, aanvullende info.
 
 const KB_CATEGORIES = [
-  { id: "project",  label: "Lopend project",    icon: "🏗",  hint: "Beschrijf een lopende opdracht: organisatie, wat er speelt, jouw rol, wat je tot nu toe hebt gedaan." },
-  { id: "star",     label: "STAR-case",          icon: "⭐",  hint: "Situatie → Taak → Actie → Resultaat. Concrete cijfers als je ze hebt." },
-  { id: "cv",       label: "CV-update",          icon: "📄",  hint: "Bijgewerkte functieomschrijving, nieuwe certificering, gewijzigde beschikbaarheid, etc." },
-  { id: "overig",   label: "Overige context",    icon: "💡",  hint: "Alles wat de AI moet weten maar nergens anders past." },
+  { id: "project",   label: "Lopend project",       icon: "🏗",  hint: "Beschrijf een lopende opdracht: organisatie, wat er speelt, jouw rol, wat je tot nu toe hebt gedaan." },
+  { id: "star",      label: "STAR-case",             icon: "⭐",  hint: "Situatie → Taak → Actie → Resultaat. Concrete cijfers als je ze hebt." },
+  { id: "cv",        label: "CV-update",             icon: "📄",  hint: "Bijgewerkte functieomschrijving, nieuwe certificering, gewijzigde beschikbaarheid, etc." },
+  { id: "opvatting", label: "Opvattingen & waarden", icon: "💭",  hint: "Stellingen in jouw eigen woorden — over werk, mensen, maatschappij, wat je belangrijk vindt. De AI gebruikt dit bij persoonlijke en opiniërende vragen." },
+  { id: "overig",    label: "Overige context",       icon: "💡",  hint: "Alles wat de AI moet weten maar nergens anders past." },
 ];
 
 function Kennisbank({ vacatureSlug, value, onChange }) {
@@ -1471,6 +1425,18 @@ export default function App() {
   const [introTekst, setIntroTekst] = useState("");
   const [introTemplate, setIntroTemplate] = useState(""); // beste intro als startpunt
   const [qaOverrides, setQaOverrides] = useState({});
+
+  // Sla nieuw AI-antwoord op ter beoordeling in Beheer
+  const handleNewAIAnswer = (vraag, antwoord) => {
+    const key = vraag.toLowerCase().slice(0, 60); // gebruik vraag als key
+    setQaOverrides(prev => {
+      // Niet overschrijven als er al een goedgekeurd antwoord is
+      if (prev[key]?.rating === "up") return prev;
+      const updated = { ...prev, [key]: { customAnswer: antwoord, rating: "pending", vraag, ts: Date.now() } };
+      window.storage?.set("qa-overrides", JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  };
   const [stijlgeheugen, setStijlgeheugen] = useState([]);
 
   // Laad globale kennisbank, QA-overrides en stijlgeheugen bij opstarten
@@ -1649,7 +1615,7 @@ export default function App() {
                   <pre style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 13, lineHeight: 1.8, color: "#374151", whiteSpace: "pre-wrap" }}>{introTekst}</pre>
                 </div>
               )}
-              <ChatPanel chips={DEFAULT_CHIPS} vacatureTekst={vacature.vacatureTekst} vacatureSlug={vacature.slug} ac={ac} isFreelance={vacature.isFreelance !== false} kennisbank={kennisbank} qaOverrides={qaOverrides} stijlgeheugen={stijlgeheugen} />
+              <ChatPanel chips={DEFAULT_CHIPS} vacatureTekst={vacature.vacatureTekst} vacatureSlug={vacature.slug} ac={ac} isFreelance={vacature.isFreelance !== false} kennisbank={kennisbank} qaOverrides={qaOverrides} stijlgeheugen={stijlgeheugen} onNewAIAnswer={handleNewAIAnswer} />
             </div>
           )}
           {tab === "loopbaan" && <LoopbaanPanel highlights={highlights} ac={ac} />}
