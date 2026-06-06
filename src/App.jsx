@@ -319,17 +319,17 @@ const QA = [
 function getLocal(q, isFreelance, qaOverrides) {
   const lq = q.toLowerCase();
 
-  // 1. Zoek goedgekeurd/geredigeerd antwoord in Beheer
+  // 1. Goedgekeurd/geredigeerd antwoord in Beheer — alleen als rating "up" of "edited" EN antwoord niet leeg
   for (const [key, override] of Object.entries(qaOverrides || {})) {
-    if (lq.includes(key) && override?.rating !== "down" && override?.customAnswer &&
-        override.customAnswer !== "BESCHIKBAARHEID_DYNAMIC" &&
-        override.customAnswer !== "SALARIS_DYNAMIC") {
+    if ((override?.rating === "up" || override?.rating === "edited") &&
+        override?.customAnswer?.trim() &&
+        lq.includes(key.toLowerCase())) {
       return override.customAnswer;
     }
   }
 
-  // 2. Dynamische antwoorden (geen AI nodig)
-  if (lq.includes("beschikbaar") || lq.includes("wanneer starten") || lq.includes("tarief & beschik")) {
+  // 2. Beschikbaarheid en tarief — altijd lokaal
+  if (lq.includes("beschikbaar") || lq.includes("tarief & beschik") || lq.includes("wanneer starten")) {
     return isFreelance
       ? "Beschikbaar als freelancer, 4 à 5 dagen per week. Eén dag houd ik vrij voor AI Compliance Academy. Geen lange opzegtermijnen — ik kan snel starten."
       : "Beschikbaar voor een vaste rol. Ik hanteer een normale opzegtermijn. Eén dag per week houd ik vrij voor AI Compliance Academy; dat is bespreekbaar.";
