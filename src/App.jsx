@@ -715,26 +715,29 @@ function ChatPanel({ chips, vacatureTekst, vacatureSlug, ac, isFreelance, kennis
     setInput("");
     setMsgs(m => [...m, { who: "user", text }]);
     setTyping(true);
-    const local = getLocal(text, isFreelance, qaOverrides);
     let answer;
     let fromAI = false;
-    if (local) {
-      await new Promise(r => setTimeout(r, 700 + Math.random() * 300));
-      answer = local;
-    } else {
-      answer = await callAI(text, vacatureTekst, isFreelance, kennisbank, stijlgeheugen);
-      fromAI = true;
+    try {
+      const local = getLocal(text, isFreelance, qaOverrides);
+      console.log("send:", text.slice(0,30), "local:", !!local);
+      if (local) {
+        await new Promise(r => setTimeout(r, 700 + Math.random() * 300));
+        answer = local;
+      } else {
+        answer = await callAI(text, vacatureTekst, isFreelance, kennisbank, stijlgeheugen);
+        fromAI = true;
+      }
+    } catch(e) {
+      console.error("send error:", e);
+      answer = "Sorry, er ging iets mis — probeer opnieuw.";
     }
     setTyping(false);
     setMsgs(m => [...m, { who: "av", text: answer }]);
     setChipsHidden(false);
-
-    // AI-antwoord opslaan in qaOverrides ter beoordeling in Beheer
     if (fromAI && answer && onNewAIAnswer) {
       onNewAIAnswer(text, answer);
     }
-
-    transcriptRef.current = [...transcriptRef.current, { ts: Date.now(), q: text, a: answer, type: local ? "chip" : "free" }];
+    transcriptRef.current = [...transcriptRef.current, { ts: Date.now(), q: text, a: answer, type: fromAI ? "free" : "chip" }];
     saveTranscript(transcriptRef.current);
   };
 
