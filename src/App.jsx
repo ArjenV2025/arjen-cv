@@ -383,6 +383,31 @@ ${vacatureTekst || "Geen vacature opgegeven."}` +
     (stijlTekst ? `\n\nGELEERDE STIJLVOORKEUR:\n${stijlTekst}` : "");
 }
 
+function cleanAI(text) {
+  if (!text) return text;
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/#{1,6}\s+/g, "")
+    .replace(/^[-*]\s+/gm, "")
+    .replace(/^[^\n]*?(?:hier is|introductietekst voor|tekst voor)[^\n]*\n+/i, "")
+    .replace(/\bprecies\b/gi, "")
+    .replace(/dat is precies /gi, "dat is ")
+    .replace(/precies zoals /gi, "zoals ")
+    .replace(/precies wat /gi, "wat ")
+    .replace(/precies waarom /gi, "daarom ")
+    .replace(/precies de combinatie/gi, "de combinatie")
+    .replace(/\bexecutiekracht\b/gi, "vermogen om te leveren")
+    .replace(/\boperationalisering\b/gi, "uitwerking")
+    .replace(/\bfaciliteer ik\b/gi, "help ik")
+    .replace(/\bfaciliteert\b/gi, "helpt")
+    .replace(/\bpassie\b/gi, "drive")
+    .replace(/  +/g, " ")
+    .replace(/ ,/g, ",")
+    .replace(/ \./g, ".")
+    .trim();
+}
+
 async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) {
   try {
     const r = await fetch("/api/chat", {
