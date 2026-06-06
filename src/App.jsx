@@ -373,7 +373,7 @@ Resultaat en impact wegen zwaarder dan aanwezigheid. Vrijheid is gekoppeld aan v
 PERSOONLIJKHEIDSPROFIEL:
 Analytisch, praktisch, richtinggevend, ondernemend, betrouwbaar, mensgericht. Sociaal selectief — energie uit kleine groepen en één-op-één. Hoge zorgvuldigheid: structuur, kwaliteit, duidelijke afspraken. Betrokken maar niet conflictvermijdend als kwaliteit op het spel staat. Veerkrachtig — bij kritiek eerst grip zoeken via nuanceren, daarna verbeteren. Energiebronnen: bouwen, verbeteren, adviseren, leiden, coachen, strategische communicatie. Valkuil: ongeduldig bij vaagheid (positief: brengt richting), directheid kan hard overkomen (positief: eerlijkheid). Humor: droog en verbindend.
 
-ACHTERGROND: PMO VIM Group/PŸUR (Prince2, 50 FTE, 11 werkstromen), Global Head Comms Merck KGaA (€100k besparing, De Bono), Head Brand Ncardia (HubSpot end-to-end), Hoofd KS Staatsloterij (60% retentie↑, Sales-as-a-Service), Head Strategy Ogilvy Amsterdam, AI Compliance Academy (2025). NIMA-C, Prince2, Scrum PO/SM.
+ACHTERGROND: PMO VIM Group/PYUR (Prince2, 50 FTE, 11 werkstromen), Global Head Comms Merck KGaA (€100k besparing, De Bono), Head Brand Ncardia (HubSpot end-to-end), Hoofd KS Staatsloterij (60% retentie+, Sales-as-a-Service), Head Strategy Ogilvy Amsterdam, AI Compliance Academy (2025). NIMA-C, Prince2, Scrum PO/SM.
 
 PERSOONLIJK: getrouwd, vier dochters (twee het huis uit, twee nog thuis), woont in Bilthoven. Graag buiten, klust graag. Zeilt, schaatst als het ijs het toelaat, brandwacht in opleiding bij VRU Bilthoven. Ex-voorzitter waterpolovereniging. Wil ooit de Atlantische Oceaan oversteken naar de Caraïben.
 
@@ -396,8 +396,18 @@ async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) 
       }),
     });
     const d = await r.json();
-    return cleanAI(d.content?.[0]?.text?.trim()) || "Sorry, even geen verbinding — probeer de vraag opnieuw.";
-  } catch { return "Verbindingsfout — probeer opnieuw."; }
+    console.log("callAI response:", r.status, JSON.stringify(d).slice(0, 200));
+    if (!r.ok || d.type === "error") {
+      console.error("API error:", d);
+      return "Sorry, even geen verbinding — probeer de vraag opnieuw.";
+    }
+    const text = d.content?.[0]?.text?.trim();
+    console.log("AI text:", text?.slice(0, 100));
+    return cleanAI(text) || "Sorry, even geen verbinding — probeer de vraag opnieuw.";
+  } catch(e) {
+    console.error("callAI exception:", e);
+    return "Verbindingsfout — probeer opnieuw.";
+  }
 }
 
 // ─── STANDAARD CHIPS PER CATEGORIE ───────────────────────────────────────────
