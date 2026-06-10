@@ -361,7 +361,7 @@ function buildContext(vacatureTekst, isFreelance, kennisbank, stijlgeheugen) {
   return `Je bent Arjen Vaalburg, senior programmamanager en strategisch adviseur. ${contractContext}
 
 TOON & STIJL (verplicht):
-Schrijf in eerste persoon, gewone spreektaal. Korte tot middellange zinnen — één zin, één punt. Gedachtestreepje (—) voor scherpe bijzin. Concrete cijfers waar mogelijk. Warm maar zakelijk, nooit informeel of joviaal. Max 4 zinnen, geen bullets. Geen markdown.
+Schrijf in eerste persoon, gewone spreektaal. Korte tot middellange zinnen — één zin, één punt. Gedachtestreepje (—) voor scherpe bijzin. Concrete cijfers waar mogelijk. Warm maar zakelijk, nooit informeel of joviaal. Schrijf ALTIJD maximaal 6 zinnen en maak elke zin altijd af — breek nooit halverwege een zin af. Geen bullets. Geen markdown.
 
 VERBODEN: precies, executiekracht, operationalisering, betekenisgeving, faciliteren (gebruik: helpen), borgen, passie, out-of-the-box, spin in het web, duizendpoot, de ideale kandidaat, op het lijf geschreven. Nooit "Hoi" als aanhef. Geen afsluitende samenvattingszin.
 
@@ -421,7 +421,7 @@ async function callAI(q, vacatureTekst, isFreelance, kennisbank, stijlgeheugen) 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
-        max_tokens: 200,
+        max_tokens: 350,
         system: buildContext(vacatureTekst, isFreelance, kennisbank, stijlgeheugen),
         messages: [{ role: "user", content: q }],
       }),
@@ -1486,11 +1486,13 @@ export default function App() {
   useEffect(() => {
     const slug = window.location.pathname.replace(/^\//, '').trim();
     console.log("URL slug detected:", slug);
-    if (!slug || slug === 'index.html') { console.log("No slug, showing setup"); return; }
-    supaGet(slug).then(data => {
+    // /fyeo → setup-scherm (alleen voor Arjen)
+    if (slug === 'fyeo') { console.log("fyeo: setup mode"); return; }
+    // leeg pad of / → laad "home" slug als standaard recruiter-pagina
+    const targetSlug = (!slug || slug === 'index.html') ? 'home' : slug;
+    supaGet(targetSlug).then(data => {
       console.log("supaGet data:", data);
       if (data) {
-        // Herstel volledige state
         const { introTekst: it, kennisbank: kb, qaOverrides: qa, stijlgeheugen: sg, ...vac } = data;
         setVacature(vac);
         if (it) setIntroTekst(it);
